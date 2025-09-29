@@ -1,58 +1,67 @@
-import api from './api';
-import { LoginRequest, LoginResponse } from '../types';
+import axios from 'axios';
+import { LoginResponse, LoginDto, RegisterDto, AuthResponse } from '../types';
+
+const API_BASE_URL = 'https://localhost:7249/api';
+
+// Kreiranje axios instance
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+});
+
+// Interceptor za dodavanje token-a u zahteve
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Interceptor za handling 401 grešaka
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const authService = {
-  login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await api.post('/auth/login', credentials);
-    const { token, userName, email, role, zaposleniId } = response.data;
+  async login(loginData: LoginDto): Promise<LoginResponse> {
+    const response = await api.post<LoginResponse>('/auth/login', loginData);
     
-    // Create user object from response data
-    const user = {
-      id: parseInt(zaposleniId) || 0,
-      ime: userName, // Backend uses userName, frontend expects ime
-      prezime: '', // Not provided by backend
-      email: email,
-      role: role
-    };
+    // Čuvanje token-a i korisnika u localStorage
+    localStorage.setItem('token', response.data.token);
+    localStorage.setItem('user', JSON.stringify({
+      userName: response.data.userName,
+      email: response.data.email,
+      role: response.data.role,
+      zaposleniId: response.data.zaposleniId
+    }));
     
-    // Store auth data
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    return {
-      token,
-      user
-    };
+    return response.data;
   },
 
-  logout: (): void => {
+  async register(registerData: RegisterDto): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>('/auth/register', registerData);
+    return response.data;
+  },
+
+  logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
 
-  getCurrentUser: () => {
+  getCurrentUser() {
     const userStr = localStorage.getItem('user');
-    if (!userStr || userStr === 'undefined' || userStr === 'null') {
-      return null;
-    }
-    try {
-      return JSON.parse(userStr);
-    } catch (error) {
-      console.error('Error parsing user from localStorage:', error);
-      // Clean up invalid data
-      localStorage.removeItem('user');
-      return null;
-    }
+    return userStr ? JSON.parse(userStr) : null;
   },
 
-  getToken: (): string | null => {
+  getToken() {
     return localStorage.getItem('token');
   },
-
-  isAuthenticated: (): boolean => {
-    const token = localStorage.getItem('token');
-    return !!token;
-  },
 };
-
-export default authService;

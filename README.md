@@ -1,70 +1,201 @@
-# Getting Started with Create React App
+# Hogwarts HR Management System - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Moderna React aplikacija za upravljanje ljudskim resursima, izgrađena sa TypeScript-om i Material-UI komponentama.
 
-## Available Scripts
+## 🛠️ Tech Stack
 
-In the project directory, you can run:
+- **React 18** sa **TypeScript**
+- **Vite** (za brže buildovanje)
+- **Material-UI (MUI)** za komponente i dizajn
+- **React Router** za navigaciju
+- **Axios** za API komunikaciju
+- **React Hook Form** za formulare
+- **TanStack Query** za state management API poziva
+- **Day.js** za rad sa datumima
 
-### `npm start`
+## 📋 Preduslovи
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Node.js** (verzija 18 ili novija)
+- **npm** ili **yarn**
+- **Backend API** pokrenut na `http://localhost:5241`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🚀 Instaliranje
 
-### `npm test`
+1. **Navigirajte u frontend direktorijum:**
+   ```bash
+   cd frontend
+   ```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. **Instalirajte dependencies:**
+   ```bash
+   npm install
+   ```
 
-### `npm run build`
+3. **Pokrenite development server:**
+   ```bash
+   npm run dev
+   ```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+4. **Otvorite aplikaciju u browser-u:**
+   ```
+   http://localhost:3000
+   ```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 📁 Struktura projekta
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```
+frontend/
+├── src/
+│   ├── components/           # Reusable komponente
+│   │   ├── Layout/          # Layout komponente
+│   │   └── LoadingSpinner.tsx
+│   ├── contexts/            # React Context providers
+│   │   └── AuthContext.tsx  # Authentication context
+│   ├── pages/               # Stranice aplikacije
+│   │   ├── Dashboard.tsx    # Glavna stranica
+│   │   ├── Login.tsx        # Stranica za prijavu
+│   │   ├── Zaposleni.tsx    # Upravljanje zaposlenim
+│   │   ├── Plate.tsx        # Upravljanje platama
+│   │   └── ZahteviZaOdmor.tsx # Zahtevi za odmor
+│   ├── services/            # API servisi
+│   │   ├── authService.ts   # Autentifikacija
+│   │   ├── zaposleniService.ts
+│   │   ├── plataService.ts
+│   │   └── zahtevZaOdmorService.ts
+│   ├── types/               # TypeScript tipovi
+│   │   └── index.ts
+│   ├── App.tsx              # Glavna komponenta
+│   ├── main.tsx             # Entry point
+│   └── index.css            # Globalni stilovi
+├── package.json
+├── vite.config.ts
+└── README.md
+```
 
-### `npm run eject`
+## 🔧 Komande
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- **Development server:**
+  ```bash
+  npm run dev
+  ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **Build za produkciju:**
+  ```bash
+  npm run build
+  ```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- **Preview build-a:**
+  ```bash
+  npm run preview
+  ```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **Linting:**
+  ```bash
+  npm run lint
+  ```
 
-## Learn More
+## ⚙️ Konfiguracija
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### API Endpoint
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+API endpoint je konfigurisan u `vite.config.ts` fajlu:
 
-### Code Splitting
+```typescript
+server: {
+  port: 3000,
+  proxy: {
+    '/api': {
+      target: 'http://localhost:5241',
+      changeOrigin: true,
+      secure: false,
+    },
+  },
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Environment Variables
 
-### Analyzing the Bundle Size
+Kreiranje `.env` fajla u root direktorijumu za custom konfiguraciju:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```env
+VITE_API_BASE_URL=http://localhost:5241/api
+VITE_APP_TITLE=Hogwarts HR System
+```
 
-### Making a Progressive Web App
+## 🎯 Funkcionalnosti
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### 🔐 Autentifikacija
+- Login sa email i lozinkom
+- Automatska redirectiя na login stranu pri 401 greškama
+- Token-based authentication
 
-### Advanced Configuration
+### 📊 Dashboard
+- Pregled statistika (zaposleni, odseci, plate, zahtevi)
+- Kartice sa key metrics
+- Liste najnovijih aktivnosti
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### 👥 Upravljanje zaposlenim
+- CRUD operacije (Create, Read, Update, Delete)
+- Pretraga i filtriranje
+- Validacija formi
+- Pregled detaljnih informacija
 
-### Deployment
+### 💰 Upravljanje platama
+- Kreiranje i editovanje plata
+- Statistike (ukupne, prosečne, najviše, najniže plate)
+- Automatska kalkulacija neto iznosa
+- Linkovanje sa zaposlenim
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### 🏖️ Zahtevi za odmor
+- Kreiranje novih zahteva
+- Odobravanje/odbijanje zahteva
+- Kalkulacija broja dana
+- Status tracking (Na čekanju, Odobren, Odbijen)
+- Napomene za administratore
 
-### `npm run build` fails to minify
+## 🔌 API Integration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Aplikacija koristi Axios za API komunikaciju sa backend-om. Svi API pozivi su organizовани u servise:
+
+- `authService.ts` - Login, logout, token management
+- `zaposleniService.ts` - CRUD za zaposlene i odseke
+- `plataService.ts` - CRUD za plate
+- `zahtevZaOdmorService.ts` - CRUD i odobravanje zahteva
+
+## 🎨 UI/UX
+
+- **Responsive design** - optimizovan za desktop i mobilne uređaje
+- **Material Design** komponente via MUI
+- **Dark/Light mode** support
+- **Loading states** i **error handling**
+- **Form validation** sa clear error messages
+- **Confirmation dialogs** za kritične akcije
+
+## 🐛 Troubleshooting
+
+### Česti problemi:
+
+1. **"Network Error" ili connection refused:**
+   - Proverite da li je backend pokrenut na `http://localhost:5241`
+   - Proverite CORS konfiguraciju na backend-u
+
+2. **"401 Unauthorized" greške:**
+   - Obriкajte localStorage (`localStorage.clear()`)
+   - Prijavite se ponovo
+
+3. **Dependencies konflikti:**
+   ```bash
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+
+## 🔄 Development Workflow
+
+1. **Pokrenite backend** (`dotnet run` u backend direktorijumu)
+2. **Pokrenite frontend** (`npm run dev` u frontend direktorijumu)
+3. **Aplikacija je dostupna** na `http://localhost:3000`
+4. **Hot reload** je omogućen - promene se automatski učitavaju
+
+## 📝 Licenca
+
+Ovaj projekat je kreiran za edukacione svrhe.

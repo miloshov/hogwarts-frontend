@@ -1,176 +1,88 @@
 import React from 'react';
 import {
   Box,
-  Grid,
-  Card,
-  CardContent,
   Typography,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Chip,
+  Grid,
+  Alert,
 } from '@mui/material';
-import {
-  People as PeopleIcon,
-  AttachMoney as MoneyIcon,
-  BeachAccess as VacationIcon,
-  Notifications as NotificationsIcon,
-} from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { dashboardService } from '../services/dashboardService';
+import DashboardStats from '../components/Dashboard/DashboardStats';
+import ActivityFeed from '../components/Dashboard/ActivityFeed';
+import QuickActions from '../components/Dashboard/QuickActions';
+import ChartsSection from '../components/Dashboard/ChartsSection';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { data: statistics, isLoading: loadingStats, error: statsError } = useQuery({
+    queryKey: ['dashboard-statistics'],
+    queryFn: dashboardService.getStatistics,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
 
-  const stats = [
-    {
-      title: 'Ukupno zaposlenih',
-      value: '124',
-      icon: <PeopleIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      color: 'primary.light',
-    },
-    {
-      title: 'Prosečna plata',
-      value: '85,000 RSD',
-      icon: <MoneyIcon sx={{ fontSize: 40, color: 'success.main' }} />,
-      color: 'success.light',
-    },
-    {
-      title: 'Aktivni zahtevi za odmor',
-      value: '12',
-      icon: <VacationIcon sx={{ fontSize: 40, color: 'warning.main' }} />,
-      color: 'warning.light',
-    },
-    {
-      title: 'Nova obaveštenja',
-      value: '5',
-      icon: <NotificationsIcon sx={{ fontSize: 40, color: 'info.main' }} />,
-      color: 'info.light',
-    },
-  ];
+  const { data: activities, isLoading: loadingActivities } = useQuery({
+    queryKey: ['dashboard-activities'],
+    queryFn: dashboardService.getRecentActivity,
+    refetchInterval: 60000, // Refetch every minute
+  });
 
-  const recentActivities = [
-    {
-      text: 'Novi zaposleni: Marko Petrović - Software Developer',
-      time: 'Pre 2 sata',
-      type: 'info',
-    },
-    {
-      text: 'Odobren zahtev za odmor: Ana Jovanović',
-      time: 'Pre 4 sata',
-      type: 'success',
-    },
-    {
-      text: 'Isplaćene plate za decembar 2024',
-      time: 'Pre 1 dan',
-      type: 'success',
-    },
-    {
-      text: 'Novi zahtev za odmor: Nikola Stojanović',
-      time: 'Pre 2 dana',
-      type: 'warning',
-    },
-  ];
+  const { data: chartsData, isLoading: loadingCharts } = useQuery({
+    queryKey: ['dashboard-charts'],
+    queryFn: dashboardService.getChartsData,
+    refetchInterval: 300000, // Refetch every 5 minutes
+  });
+
+  if (statsError) {
+    return (
+      <Box>
+        <Typography variant="h4" gutterBottom>
+          Dashboard
+        </Typography>
+        <Alert severity="error" sx={{ mt: 2 }}>
+          Greška pri učitavanju podataka za dashboard. Molimo pokušajte ponovo.
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Dobrodošli, {user?.ime}!
+      <Typography variant="h4" gutterBottom>
+        Dashboard
       </Typography>
-      
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {stats.map((stat, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                background: `linear-gradient(135deg, ${stat.color}15, ${stat.color}05)`,
-                border: `1px solid ${stat.color}30`,
-              }}
-            >
-              <CardContent>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  <Box>
-                    <Typography color="text.secondary" gutterBottom variant="h6">
-                      {stat.title}
-                    </Typography>
-                    <Typography variant="h4" component="div">
-                      {stat.value}
-                    </Typography>
-                  </Box>
-                  {stat.icon}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+
+      {/* Statistics Cards */}
+      <Box mb={4}>
+        <DashboardStats statistics={statistics} loading={loadingStats} />
+      </Box>
+
+      {/* Quick Actions */}
+      <Box mb={4}>
+        <QuickActions />
+      </Box>
+
+      {/* Activity Feed and Charts */}
+      <Grid container spacing={3} mb={4}>
+        <Grid item xs={12} lg={4}>
+          <ActivityFeed activities={activities} loading={loadingActivities} />
+        </Grid>
+        <Grid item xs={12} lg={8}>
+          <Box height="100%">
+            {loadingCharts ? (
+              <Box display="flex" justifyContent="center" alignItems="center" height={400}>
+                <LoadingSpinner />
+              </Box>
+            ) : (
+              <ChartsSection data={chartsData} loading={loadingCharts} />
+            )}
+          </Box>
+        </Grid>
       </Grid>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Brzi pristup
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <Card sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}>
-                  <CardContent>
-                    <Typography variant="h6" component="div">
-                      Dodaj novog zaposlenog
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Kreiraj profil za novog člana tima
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Card sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}>
-                  <CardContent>
-                    <Typography variant="h6" component="div">
-                      Generiši izveštaj
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Kreiraj mesečni ili godišnji izveštaj
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-        
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Nedavne aktivnosti
-            </Typography>
-            <List>
-              {recentActivities.map((activity, index) => (
-                <ListItem key={index} sx={{ px: 0 }}>
-                  <ListItemIcon>
-                    <NotificationsIcon color="action" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={activity.text}
-                    secondary={activity.time}
-                    primaryTypographyProps={{ variant: 'body2' }}
-                    secondaryTypographyProps={{ variant: 'caption' }}
-                  />
-                  <Chip 
-                    size="small" 
-                    label={activity.type} 
-                    color={activity.type as any}
-                    variant="outlined"
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
-      </Grid>
+      {/* Additional Charts Section */}
+      <Box mb={4}>
+        <ChartsSection data={chartsData} loading={loadingCharts} />
+      </Box>
     </Box>
   );
 };
