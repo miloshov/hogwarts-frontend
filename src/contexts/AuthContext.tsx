@@ -28,7 +28,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedUser = authService.getCurrentUser();
     const token = authService.getToken();
     
+    console.log("?? Checking saved user and token:", { savedUser, token });
     if (savedUser && token) {
+      console.log("? Restoring user from localStorage");
       setUser(savedUser);
     }
     
@@ -36,8 +38,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (userNameOrEmail: string, password: string) => {
+    console.log("?? Login attempt started");
     try {
+      console.log("?? Calling authService.login");
       const response = await authService.login({ userName: userNameOrEmail, password });
+      console.log("? Login response received:", response);
       // Kreiraj user objekat iz response podataka
       const user: Korisnik = {
         id: 0, // Ovo ćemo popuniti kada budemo imali user ID u response
@@ -48,7 +53,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         datumRegistracije: new Date().toISOString(),
         zaposleniId: response.zaposleniId
       };
+      console.log("?? Setting user:", user);
       setUser(user);
+      console.log("?? Current localStorage token:", localStorage.getItem("token"));
     } catch (error) {
       throw error;
     }

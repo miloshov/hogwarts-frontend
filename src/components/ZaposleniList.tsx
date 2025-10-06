@@ -32,7 +32,7 @@ import {
 import { Zaposleni } from '../../types';
 import { PaginatedResponse } from '../../types/dashboard';
 import ZaposleniCard from './ZaposleniCard';
-import LoadingSpinner from '../LoadingSpinner';
+import LoadingSpinner from './LoadingSpinner';
 
 interface ZaposleniListProps {
   data: PaginatedResponse<Zaposleni> | undefined;

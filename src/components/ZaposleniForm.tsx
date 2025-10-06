@@ -14,8 +14,8 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { Zaposleni, ZaposleniDto } from '../../types';
-import { odsekService } from '../../services/zaposleniService';
-import LoadingSpinner from '../LoadingSpinner';
+import { odsekService } from '../services/zaposleniService';
+import LoadingSpinner from './LoadingSpinner';
 
 interface ZaposleniFormData {
   ime: string;

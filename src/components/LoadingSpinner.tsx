@@ -1,29 +1,28 @@
-import React from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { CircularProgress, Box, Typography } from '@mui/material';
 
 interface LoadingSpinnerProps {
   size?: number;
   message?: string;
-  fullHeight?: boolean;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  size = 60, 
-  message = 'Učitavanje...',
-  fullHeight = true 
-}) => {
+const LoadingSpinner = ({ size = 40, message }: LoadingSpinnerProps) => {
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      justifyContent="center"
-      alignItems="center"
-      height={fullHeight ? "100vh" : "auto"}
-      py={fullHeight ? 0 : 2}
+    <Box 
+      display="flex" 
+      flexDirection="column" 
+      alignItems="center" 
+      justifyContent="center" 
+      p={3}
+      minHeight="200px"
     >
       <CircularProgress size={size} />
       {message && (
-        <Typography variant={size > 30 ? "h6" : "body2"} sx={{ mt: size > 30 ? 2 : 1 }}>
+        <Typography 
+          variant="body2" 
+          color="text.secondary" 
+          mt={2} 
+          textAlign="center"
+        >
           {message}
         </Typography>
       )}
