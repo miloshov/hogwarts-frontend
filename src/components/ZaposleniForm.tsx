@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -13,10 +13,11 @@ import {
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
-import { Zaposleni, ZaposleniDto } from '../../types';
-import { odsekService } from '../services/zaposleniService';
+import { Zaposleni, ZaposleniDto, Pol } from '../types/types';
+import { zaposleniService } from '../services/zaposleniService';
 import LoadingSpinner from './LoadingSpinner';
-
+import Avatar from '../components/Avatar';
+import ImageUpload from '../components/ImageUpload';
 interface ZaposleniFormData {
   ime: string;
   prezime: string;
@@ -29,32 +30,38 @@ interface ZaposleniFormData {
   adresa: string;
   brojTelefon: string;
   odsekId: number | undefined;
+  pol?: Pol;
 }
-
 interface ZaposleniFormProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: ZaposleniDto) => void;
   editingZaposleni?: Zaposleni | null;
   loading?: boolean;
+  onImageUpload?: (zaposleniId: number, file: File) => void;
+  imageUploadLoading?: boolean;
 }
-
 const ZaposleniForm: React.FC<ZaposleniFormProps> = ({
   open,
   onClose,
   onSubmit,
   editingZaposleni,
   loading = false,
+  onImageUpload,
+  imageUploadLoading = false,
 }) => {
-  const { control, handleSubmit, reset, formState: { errors } } = useForm<ZaposleniFormData>();
-
-  const { data: odseci } = useQuery({
-    queryKey: ['odseci'],
-    queryFn: odsekService.getAll,
-  });
-
+  const { control, handleSubmit, reset, formState: { errors }, watch } = useForm<ZaposleniFormData>();
+  const [currentEmployee, setCurrentEmployee] = useState<Zaposleni | null>(null);
+  
+  // Watch pol for Avatar preview
+  const polValue = watch('pol');
+const { data: odseci } = useQuery({
+  queryKey: ['odseci'],
+  queryFn: zaposleniService.getOdseci,
+});
   useEffect(() => {
     if (editingZaposleni) {
+      setCurrentEmployee(editingZaposleni);
       reset({
         ime: editingZaposleni.ime,
         prezime: editingZaposleni.prezime,
@@ -67,8 +74,10 @@ const ZaposleniForm: React.FC<ZaposleniFormProps> = ({
         adresa: editingZaposleni.adresa,
         brojTelefon: editingZaposleni.brojTelefon,
         odsekId: editingZaposleni.odsekId,
+        pol: editingZaposleni.pol,
       });
     } else {
+      setCurrentEmployee(null);
       reset({
         ime: '',
         prezime: '',
@@ -81,36 +90,70 @@ const ZaposleniForm: React.FC<ZaposleniFormProps> = ({
         adresa: '',
         brojTelefon: '',
         odsekId: undefined,
+        pol: undefined,
       });
     }
   }, [editingZaposleni, reset, open]);
-
   const handleFormSubmit = (data: ZaposleniFormData) => {
+    console.log('Form data being submitted:', data); // 🔍 DEBUG
     const zaposleniData: ZaposleniDto = {
       ...data,
       odsekId: data.odsekId || undefined,
     };
+    console.log('Processed data for API:', zaposleniData); // 🔍 DEBUG
     onSubmit(zaposleniData);
   };
-
+  const handleImageUploadWrapper = (file: File) => {
+    if (editingZaposleni && onImageUpload) {
+      onImageUpload(editingZaposleni.id, file);
+    }
+  };
   const handleClose = () => {
     reset();
+    setCurrentEmployee(null);
     onClose();
   };
-
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        <Typography variant="h6">
-          {editingZaposleni ? 'Uredi zaposlenog' : 'Dodaj novog zaposlenog'}
-        </Typography>
+        {editingZaposleni ? 'Uredi zaposlenog' : 'Dodaj novog zaposlenog'}
       </DialogTitle>
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <DialogContent>
           <Grid container spacing={2}>
+            {/* Profile Section */}
+            {editingZaposleni && (
+              <>
+                <Grid item xs={12}>
+                  <Typography variant="h6" color="primary" gutterBottom>
+                    Profilna slika
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box display="flex" alignItems="center" gap={3}>
+                    <Avatar
+                      zaposleni={currentEmployee}
+                      pol={polValue}
+                      size={80}
+                    />
+                    <Box>
+                      <ImageUpload
+                        onUpload={handleImageUploadWrapper}
+                        loading={imageUploadLoading}
+                        buttonText="Promeni sliku"
+                        accept="image/*"
+                      />
+                      <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                        Podržani formati: JPG, PNG, GIF (max 5MB)
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              </>
+            )}
             {/* Osnovni podaci */}
             <Grid item xs={12}>
-              <Typography variant="h6" color="primary" gutterBottom>
+              <Typography variant="h6" color="primary" gutterBottom sx={{ mt: editingZaposleni ? 2 : 0 }}>
                 Osnovni podaci
               </Typography>
             </Grid>
@@ -217,12 +260,30 @@ const ZaposleniForm: React.FC<ZaposleniFormProps> = ({
                 )}
               />
             </Grid>
-
             {/* Lični podaci */}
             <Grid item xs={12}>
               <Typography variant="h6" color="primary" gutterBottom sx={{ mt: 2 }}>
                 Lični podaci
               </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="pol"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    label="Pol"
+                    fullWidth
+                    value={field.value || ''}
+                  >
+                    <MenuItem value="">Odaberite pol</MenuItem>
+                    <MenuItem value={Pol.Muski}>Muški</MenuItem>
+                    <MenuItem value={Pol.Zenski}>Ženski</MenuItem>
+                  </TextField>
+                )}
+              />
             </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
@@ -239,9 +300,6 @@ const ZaposleniForm: React.FC<ZaposleniFormProps> = ({
                     InputLabelProps={{ shrink: true }}
                     error={!!errors.datumRodjenja}
                     helperText={errors.datumRodjenja?.message}
-                    inputProps={{
-                      max: new Date().toISOString().split('T')[0]
-                    }}
                   />
                 )}
               />
@@ -282,12 +340,17 @@ const ZaposleniForm: React.FC<ZaposleniFormProps> = ({
                     fullWidth
                     error={!!errors.jmbg}
                     helperText={errors.jmbg?.message}
-                    inputProps={{ maxLength: 13 }}
                   />
                 )}
               />
             </Grid>
+            {/* Kontakt informacije */}
             <Grid item xs={12}>
+              <Typography variant="h6" color="primary" gutterBottom sx={{ mt: 2 }}>
+                Kontakt informacije
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
               <Controller
                 name="adresa"
                 control={control}
@@ -309,7 +372,13 @@ const ZaposleniForm: React.FC<ZaposleniFormProps> = ({
                 name="brojTelefon"
                 control={control}
                 defaultValue=""
-                rules={{ required: 'Broj telefona je obavezan' }}
+                rules={{
+                  required: 'Broj telefona je obavezan',
+                  pattern: {
+                    value: /^[\d\s\-\+\(\)]+$/,
+                    message: 'Neispravna format broja telefona'
+                  }
+                }}
                 render={({ field }) => (
                   <TextField
                     {...field}
@@ -321,11 +390,10 @@ const ZaposleniForm: React.FC<ZaposleniFormProps> = ({
                 )}
               />
             </Grid>
-
-            {/* Podaci o zaposlenju */}
+            {/* Informacije o zaposlenju */}
             <Grid item xs={12}>
               <Typography variant="h6" color="primary" gutterBottom sx={{ mt: 2 }}>
-                Podaci o zaposlenju
+                Informacije o zaposlenju
               </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -349,28 +417,21 @@ const ZaposleniForm: React.FC<ZaposleniFormProps> = ({
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ p: 3 }}>
           <Button onClick={handleClose} disabled={loading}>
             Otkaži
           </Button>
-          <Button
-            type="submit"
-            variant="contained"
+          <Button 
+            type="submit" 
+            variant="contained" 
             disabled={loading}
+            startIcon={loading ? <LoadingSpinner size={20} /> : null}
           >
-            {loading ? (
-              <Box display="flex" alignItems="center">
-                <LoadingSpinner size={20} />
-                <Box ml={1}>Sačuvaj</Box>
-              </Box>
-            ) : (
-              editingZaposleni ? 'Sačuvaj izmene' : 'Dodaj zaposlenog'
-            )}
+            {loading ? 'Čuva se...' : (editingZaposleni ? 'Ažuriraj' : 'Dodaj')}
           </Button>
         </DialogActions>
       </form>
     </Dialog>
   );
 };
-
 export default ZaposleniForm;

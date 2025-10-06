@@ -38,20 +38,29 @@ const ZaposleniPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['zaposleni-paginated', searchParams],
-    queryFn: () => zaposleniService.getPaginated(searchParams),
+    queryKey: ['zaposleni', searchParams],
+    queryFn: () => zaposleniService.get(
+      searchParams.page,
+      searchParams.pageSize,
+      searchParams.search,
+      searchParams.sortBy,
+      searchParams.ascending
+    ),
     keepPreviousData: true,
   });
 
+  // ⭐ KLJUČNO: Dodali cache invalidation logiku
   const createMutation = useMutation({
     mutationFn: zaposleniService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['zaposleni-paginated'] });
+      // ⭐ KLJUČNO: Invalidiramo cache da se lista automatski osvezi
+      queryClient.invalidateQueries({ queryKey: ['zaposleni'] });
       setFormOpen(false);
       setEditingZaposleni(null);
       showSnackbar('Zaposleni je uspešno dodat', 'success');
     },
     onError: (error: any) => {
+      console.error("Greška pri kreiranju:", error);
       showSnackbar(error.message || 'Greška pri dodavanju zaposlenog', 'error');
     },
   });
@@ -60,7 +69,7 @@ const ZaposleniPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: number; data: ZaposleniDto }) =>
       zaposleniService.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['zaposleni-paginated'] });
+      queryClient.invalidateQueries({ queryKey: ['zaposleni'] });
       setFormOpen(false);
       setEditingZaposleni(null);
       showSnackbar('Zaposleni je uspešno ažuriran', 'success');
@@ -73,11 +82,24 @@ const ZaposleniPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: zaposleniService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['zaposleni-paginated'] });
+      queryClient.invalidateQueries({ queryKey: ['zaposleni'] });
       showSnackbar('Zaposleni je uspešno obrisan', 'success');
     },
     onError: (error: any) => {
       showSnackbar(error.message || 'Greška pri brisanju zaposlenog', 'error');
+    },
+  });
+
+  // New mutation for image upload
+  const uploadImageMutation = useMutation({
+    mutationFn: ({ zaposleniId, file }: { zaposleniId: number; file: File }) =>
+      zaposleniService.uploadProfileImage(zaposleniId, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['zaposleni'] });
+      showSnackbar('Slika je uspešno upload-ovana', 'success');
+    },
+    onError: (error: any) => {
+      showSnackbar(error.message || 'Greška pri upload-u slike', 'error');
     },
   });
 
@@ -90,7 +112,7 @@ const ZaposleniPage: React.FC = () => {
     setFormOpen(true);
   };
 
-  const handleEdit = (zaposleni: Zaposleni) => {
+  const handleEdit = (zaposleni: ZaposleniType) => {
     setEditingZaposleni(zaposleni);
     setFormOpen(true);
   };
@@ -101,7 +123,7 @@ const ZaposleniPage: React.FC = () => {
     }
   };
 
-  const handleView = (zaposleni: Zaposleni) => {
+  const handleView = (zaposleni: ZaposleniType) => {
     setViewingZaposleni(zaposleni);
     setDetailsOpen(true);
   };
@@ -112,6 +134,11 @@ const ZaposleniPage: React.FC = () => {
     } else {
       createMutation.mutate(data);
     }
+  };
+
+  // New handler for image upload
+  const handleImageUpload = (zaposleniId: number, file: File) => {
+    uploadImageMutation.mutate({ zaposleniId, file });
   };
 
   const handleSearchChange = (search: string) => {
@@ -136,7 +163,7 @@ const ZaposleniPage: React.FC = () => {
     setViewingZaposleni(null);
   };
 
-  const handleEditFromDetails = (zaposleni: Zaposleni) => {
+  const handleEditFromDetails = (zaposleni: ZaposleniType) => {
     setDetailsOpen(false);
     handleEdit(zaposleni);
   };
@@ -169,6 +196,7 @@ const ZaposleniPage: React.FC = () => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onView={handleView}
+        onImageUpload={handleImageUpload}
       />
 
       <ZaposleniForm
@@ -177,6 +205,8 @@ const ZaposleniPage: React.FC = () => {
         onSubmit={handleFormSubmit}
         editingZaposleni={editingZaposleni}
         loading={createMutation.isPending || updateMutation.isPending}
+        onImageUpload={handleImageUpload}
+        imageUploadLoading={uploadImageMutation.isPending}
       />
 
       <ZaposleniDetails
@@ -184,6 +214,8 @@ const ZaposleniPage: React.FC = () => {
         open={detailsOpen}
         onClose={handleDetailsClose}
         onEdit={handleEditFromDetails}
+        onImageUpload={handleImageUpload}
+        imageUploadLoading={uploadImageMutation.isPending}
       />
 
       <Snackbar

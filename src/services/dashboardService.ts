@@ -1,5 +1,6 @@
-import { api } from './authService';
+import { api } from './apiService';
 import { DashboardStatistics, RecentActivity, ChartData } from '../types/dashboard';
+
 
 export const dashboardService = {
   async getStatistics(): Promise<DashboardStatistics> {

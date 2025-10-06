@@ -33,7 +33,7 @@ import { Zaposleni } from '../../types';
 import { PaginatedResponse } from '../../types/dashboard';
 import ZaposleniCard from './ZaposleniCard';
 import LoadingSpinner from './LoadingSpinner';
-
+import Avatar from './Avatar'; // 🔧 Import Avatar komponente
 interface ZaposleniListProps {
   data: PaginatedResponse<Zaposleni> | undefined;
   loading: boolean;
@@ -48,23 +48,20 @@ interface ZaposleniListProps {
   onEdit: (zaposleni: Zaposleni) => void;
   onDelete: (id: number) => void;
   onView: (zaposleni: Zaposleni) => void;
+  onImageUpload?: (zaposleniId: number, file: File) => void; // 🔧 Dodali prop za upload
 }
-
 type SortableField = 'ime' | 'prezime' | 'email' | 'pozicija' | 'datumzaposlenja';
-
 interface HeadCell {
   id: SortableField;
   label: string;
   sortable: boolean;
 }
-
 const headCells: HeadCell[] = [
   { id: 'ime', label: 'Ime i prezime', sortable: true },
   { id: 'email', label: 'Email', sortable: true },
   { id: 'pozicija', label: 'Pozicija', sortable: true },
   { id: 'datumzaposlenja', label: 'Datum zaposlenja', sortable: true },
 ];
-
 const ZaposleniList: React.FC<ZaposleniListProps> = ({
   data,
   loading,
@@ -79,40 +76,34 @@ const ZaposleniList: React.FC<ZaposleniListProps> = ({
   onEdit,
   onDelete,
   onView,
+  onImageUpload,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [searchInput, setSearchInput] = useState(search);
-
   const handleSearchSubmit = () => {
     onSearchChange(searchInput);
   };
-
   const handleSearchClear = () => {
     setSearchInput('');
     onSearchChange('');
   };
-
   const handleSearchKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
       handleSearchSubmit();
     }
   };
-
   const handleSort = (property: SortableField) => {
     const isAsc = sortBy === property && ascending;
     onSortChange(property, !isAsc);
   };
-
   const handlePageChange = (event: unknown, newPage: number) => {
     onPageChange(newPage + 1, pageSize);
   };
-
   const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newPageSize = parseInt(event.target.value, 10);
     onPageChange(1, newPageSize);
   };
-
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
@@ -120,7 +111,6 @@ const ZaposleniList: React.FC<ZaposleniListProps> = ({
       </Box>
     );
   }
-
   if (!data?.data?.length) {
     return (
       <Box textAlign="center" py={4}>
@@ -135,7 +125,6 @@ const ZaposleniList: React.FC<ZaposleniListProps> = ({
       </Box>
     );
   }
-
   return (
     <Box>
       {/* Search bar */}
@@ -162,7 +151,6 @@ const ZaposleniList: React.FC<ZaposleniListProps> = ({
           }}
         />
       </Paper>
-
       {/* Results info */}
       <Box mb={2}>
         <Typography variant="body2" color="text.secondary">
@@ -170,7 +158,6 @@ const ZaposleniList: React.FC<ZaposleniListProps> = ({
           {search && ` za "${search}"`}
         </Typography>
       </Box>
-
       {/* Mobile card view */}
       {isMobile ? (
         <Grid container spacing={2}>
@@ -191,6 +178,8 @@ const ZaposleniList: React.FC<ZaposleniListProps> = ({
           <Table>
             <TableHead>
               <TableRow>
+                {/* 🔧 Dodali Avatar kolonu */}
+                <TableCell width="60">Slika</TableCell>
                 {headCells.map((headCell) => (
                   <TableCell key={headCell.id}>
                     {headCell.sortable ? (
@@ -214,6 +203,12 @@ const ZaposleniList: React.FC<ZaposleniListProps> = ({
             <TableBody>
               {data.data.map((zaposleni) => (
                 <TableRow key={zaposleni.id} hover>
+                  {/* 🔧 Avatar cell */}
+                  <TableCell>
+                    <Box display="flex" alignItems="center" justifyContent="center">
+                      <Avatar zaposleni={zaposleni} size={40} />
+                    </Box>
+                  </TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight="medium">
                       {zaposleni.punoIme || `${zaposleni.ime} ${zaposleni.prezime}`}
@@ -275,7 +270,6 @@ const ZaposleniList: React.FC<ZaposleniListProps> = ({
           </Table>
         </TableContainer>
       )}
-
       {/* Pagination */}
       <TablePagination
         component="div"
@@ -293,5 +287,4 @@ const ZaposleniList: React.FC<ZaposleniListProps> = ({
     </Box>
   );
 };
-
 export default ZaposleniList;

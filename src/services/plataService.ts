@@ -1,4 +1,4 @@
-import { api } from './authService';
+import { api } from './apiService';
 import { Plata, PlataDto } from '../types';
 
 export const plataService = {

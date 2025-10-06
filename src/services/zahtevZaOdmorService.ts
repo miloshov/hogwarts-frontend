@@ -1,4 +1,4 @@
-import { api } from './authService';
+import { api } from './apiService';
 import { ZahtevZaOdmor, ZahtevZaOdmorDto } from '../types';
 
 export const zahtevZaOdmorService = {

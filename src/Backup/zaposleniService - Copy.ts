@@ -14,6 +14,11 @@ export const zaposleniService = {
     return response.data;
   },
 
+  // 🔧 ALIAS za kompatibilnost
+  async getPaginated(params: any) {
+    return this.get(params.page, params.pageSize, params.search, params.sortBy, params.ascending);
+  },
+
   async getById(id: number): Promise<Zaposleni> {
     const response = await api.get<Zaposleni>(`/zaposleni/${id}`);
     return response.data;
@@ -75,15 +80,18 @@ export const zaposleniService = {
     return response.data;
   },
 
+  // 🔧 ALIAS za image upload funkciju 
+  async uploadImage(zaposleniId: number, file: File): Promise<FileUploadResponse> {
+    return this.uploadProfileImage(zaposleniId, file);
+  },
+
   // 🆕 NOVE FUNKCIJE ZA UPLOAD SLIKA
-  // ⚠️ ISPRAVKA: Ruta MORA biti `/zaposleni/${id}/upload-image` 
-  // kao što je definisano u ZaposleniController.cs linija 191
   async uploadProfileImage(id: number, file: File): Promise<FileUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
 
     const response = await api.post<FileUploadResponse>(
-      `/zaposleni/${id}/upload-image`, // ✅ ISPRAVNA RUTA
+      `/zaposleni/${id}/upload-image`,
       formData,
       {
         headers: {
@@ -94,8 +102,6 @@ export const zaposleniService = {
     return response.data;
   },
 
-  // ⚠️ ISPRAVKA: Ruta MORA biti `/zaposleni/${id}/delete-image`
-  // kao što je definisano u ZaposleniController.cs linija 259
   async deleteProfileImage(id: number): Promise<FileUploadResponse> {
     const response = await api.delete<FileUploadResponse>(`/zaposleni/${id}/delete-image`);
     return response.data;

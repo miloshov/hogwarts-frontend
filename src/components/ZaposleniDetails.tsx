@@ -7,7 +7,6 @@ import {
   Button,
   Typography,
   Grid,
-  Avatar,
   Box,
   Chip,
   Divider,
@@ -19,14 +18,19 @@ import {
   Work as WorkIcon,
   CalendarToday as CalendarIcon,
   Badge as BadgeIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { Zaposleni } from '../../types';
+import Avatar from '../components/Avatar';
+import ImageUpload from '../components/ImageUpload';
 
 interface ZaposleniDetailsProps {
   zaposleni: Zaposleni | null;
   open: boolean;
   onClose: () => void;
   onEdit?: (zaposleni: Zaposleni) => void;
+  onImageUpload?: (zaposleniId: number, file: File) => void;
+  imageUploadLoading?: boolean;
 }
 
 const ZaposleniDetails: React.FC<ZaposleniDetailsProps> = ({
@@ -34,17 +38,15 @@ const ZaposleniDetails: React.FC<ZaposleniDetailsProps> = ({
   open,
   onClose,
   onEdit,
+  onImageUpload,
+  imageUploadLoading = false,
 }) => {
   if (!zaposleni) return null;
 
-  const getInitials = (ime: string, prezime: string) => {
-    return `${ime.charAt(0).toUpperCase()}${prezime.charAt(0).toUpperCase()}`;
-  };
-
-  const getAvatarColor = (name: string) => {
-    const colors = ['#1976d2', '#388e3c', '#f57c00', '#d32f2f', '#7b1fa2', '#00796b'];
-    const index = name.length % colors.length;
-    return colors[index];
+  const handleImageUpload = (file: File) => {
+    if (onImageUpload) {
+      onImageUpload(zaposleni.id, file);
+    }
   };
 
   const InfoRow: React.FC<{ icon: React.ReactElement; label: string; value: string }> = ({
@@ -63,21 +65,26 @@ const ZaposleniDetails: React.FC<ZaposleniDetailsProps> = ({
     </Box>
   );
 
+  const getPolDisplayName = (pol?: string) => {
+    switch (pol) {
+      case 'Muski':
+        return 'Muški';
+      case 'Zenski':
+        return 'Ženski';
+      default:
+        return 'Nije specificiran';
+    }
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
         <Box display="flex" alignItems="center">
           <Avatar
-            sx={{
-              bgcolor: getAvatarColor(zaposleni.ime + zaposleni.prezime),
-              width: 64,
-              height: 64,
-              mr: 2,
-            }}
-          >
-            {getInitials(zaposleni.ime, zaposleni.prezime)}
-          </Avatar>
-          <Box>
+            zaposleni={zaposleni}
+            size={80}
+          />
+          <Box flexGrow={1} ml={2}>
             <Typography variant="h5" component="div">
               {zaposleni.punoIme || `${zaposleni.ime} ${zaposleni.prezime}`}
             </Typography>
@@ -89,6 +96,16 @@ const ZaposleniDetails: React.FC<ZaposleniDetailsProps> = ({
               color={zaposleni.isActive ? 'success' : 'default'}
               size="small"
               sx={{ mt: 0.5 }}
+            />
+          </Box>
+          <Box>
+            <ImageUpload
+              onUpload={handleImageUpload}
+              loading={imageUploadLoading}
+              buttonText="Promeni sliku"
+              accept="image/*"
+              variant="outlined"
+              size="small"
             />
           </Box>
         </Box>
@@ -121,6 +138,11 @@ const ZaposleniDetails: React.FC<ZaposleniDetailsProps> = ({
             <Typography variant="h6" gutterBottom>
               Lični podaci
             </Typography>
+            <InfoRow
+              icon={<PersonIcon />}
+              label="Pol"
+              value={getPolDisplayName(zaposleni.pol)}
+            />
             <InfoRow
               icon={<BadgeIcon />}
               label="JMBG"

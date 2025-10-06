@@ -3,7 +3,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Avatar,
   Box,
   Chip,
   IconButton,
@@ -15,14 +14,19 @@ import {
   Visibility as ViewIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
+  CameraAlt as CameraIcon,
 } from '@mui/icons-material';
 import { Zaposleni } from '../../types';
+import Avatar from '../components/Avatar';
+import ImageUpload from '../components/ImageUpload';
 
 interface ZaposleniCardProps {
   zaposleni: Zaposleni;
   onEdit: (zaposleni: Zaposleni) => void;
   onDelete: (id: number) => void;
   onView: (zaposleni: Zaposleni) => void;
+  onImageUpload?: (zaposleniId: number, file: File) => void;
+  imageUploadLoading?: boolean;
 }
 
 const ZaposleniCard: React.FC<ZaposleniCardProps> = ({
@@ -30,32 +34,63 @@ const ZaposleniCard: React.FC<ZaposleniCardProps> = ({
   onEdit,
   onDelete,
   onView,
+  onImageUpload,
+  imageUploadLoading = false,
 }) => {
-  const getInitials = (ime: string, prezime: string) => {
-    return `${ime.charAt(0).toUpperCase()}${prezime.charAt(0).toUpperCase()}`;
-  };
-
-  const getAvatarColor = (name: string) => {
-    const colors = ['#1976d2', '#388e3c', '#f57c00', '#d32f2f', '#7b1fa2', '#00796b'];
-    const index = name.length % colors.length;
-    return colors[index];
+  const handleImageUpload = (file: File) => {
+    if (onImageUpload) {
+      onImageUpload(zaposleni.id, file);
+    }
   };
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flexGrow: 1 }}>
         <Box display="flex" alignItems="center" mb={2}>
-          <Avatar
-            sx={{ 
-              bgcolor: getAvatarColor(zaposleni.ime + zaposleni.prezime),
-              width: 56,
-              height: 56,
-              mr: 2
-            }}
-          >
-            {getInitials(zaposleni.ime, zaposleni.prezime)}
-          </Avatar>
-          <Box flexGrow={1}>
+          <Box position="relative">
+            <Avatar
+              zaposleni={zaposleni}
+              size={56}
+            />
+            {onImageUpload && (
+              <Box
+                position="absolute"
+                bottom={-4}
+                right={-4}
+                sx={{
+                  backgroundColor: 'background.paper',
+                  borderRadius: '50%',
+                  border: '2px solid',
+                  borderColor: 'background.paper',
+                }}
+              >
+                <ImageUpload
+                  onUpload={handleImageUpload}
+                  loading={imageUploadLoading}
+                  buttonText=""
+                  accept="image/*"
+                  renderAsIcon
+                  iconButton={
+                    <IconButton
+                      size="small"
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        backgroundColor: 'primary.main',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: 'primary.dark',
+                        },
+                      }}
+                    >
+                      <CameraIcon sx={{ fontSize: 14 }} />
+                    </IconButton>
+                  }
+                />
+              </Box>
+            )}
+          </Box>
+          <Box flexGrow={1} ml={2}>
             <Typography variant="h6" component="div">
               {zaposleni.punoIme || `${zaposleni.ime} ${zaposleni.prezime}`}
             </Typography>

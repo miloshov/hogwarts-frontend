@@ -275,7 +275,7 @@ const Plate: React.FC = () => {
                   name="zaposleniId"
                   control={control}
                   defaultValue={0}
-                  rules={{ required: 'Zaposleni je obavezan' }}
+                  rules={{ required: 'Zaposleni je obavezan', min: { value: 1, message: 'Molimo izaberite zaposlenog' } }}
                   render={({ field }) => (
                     <TextField
                       {...field}
@@ -286,7 +286,10 @@ const Plate: React.FC = () => {
                       error={!!errors.zaposleniId}
                       helperText={errors.zaposleniId?.message}
                     >
-                      {zaposleni?.filter(z => z.isActive).map((z) => (
+                      <MenuItem value={0} disabled>
+                        -- Izaberite zaposlenog --
+                      </MenuItem>
+                      {zaposleni?.map((z) => (
                         <MenuItem key={z.id} value={z.id}>
                           {`${z.ime} ${z.prezime} - ${z.pozicija}`}
                         </MenuItem>
@@ -398,7 +401,7 @@ const Plate: React.FC = () => {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpen(false)}>Otkadži</Button>
+            <Button onClick={() => setOpen(false)}>Otkaži</Button>
             <Button
               type="submit"
               variant="contained"

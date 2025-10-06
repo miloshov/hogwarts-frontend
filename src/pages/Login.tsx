@@ -31,7 +31,7 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(userNameOrEmail, password);
+      await login({ UserName: userNameOrEmail, Password: password });
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Greška pri prijavljivanju');

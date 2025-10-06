@@ -123,7 +123,7 @@ const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Otkadži</Button>
+        <Button onClick={onClose}>Otkaži</Button>
         <Button
           onClick={handleReject}
           color="error"
@@ -526,7 +526,7 @@ const ZahteviZaOdmor: React.FC = () => {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpen(false)}>Otkadži</Button>
+            <Button onClick={() => setOpen(false)}>Otkaži</Button>
             <Button
               type="submit"
               variant="contained"
