@@ -78,11 +78,6 @@ const Dashboard: React.FC = () => {
           </Box>
         </Grid>
       </Grid>
-
-      {/* Additional Charts Section */}
-      <Box mb={4}>
-        <ChartsSection data={chartsData} loading={loadingCharts} />
-      </Box>
     </Box>
   );
 };

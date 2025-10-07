@@ -1,7 +1,22 @@
 import { api } from './apiService';
 import { Zaposleni, ZaposleniDto, Odsek, FileUploadResponse } from '../types';
 
+// 🆕 NOVI TIP ZA DROPDOWN - jednostavan objekat
+interface ZaposleniDropdownItem {
+  id: number;
+  ime: string;
+  prezime: string;
+  punoIme: string;
+  pozicija: string;
+}
+
 export const zaposleniService = {
+  // 🆕 NOVI DROPDOWN METOD - optimizovan za padajuće menije
+  async getDropdown(): Promise<ZaposleniDropdownItem[]> {
+    const response = await api.get<ZaposleniDropdownItem[]>('/zaposleni/dropdown');
+    return response.data;
+  },
+
   async getAll(): Promise<Zaposleni[]> {
     const response = await api.get<Zaposleni[]>('/zaposleni/all');
     return response.data;
@@ -113,3 +128,6 @@ export const zaposleniService = {
       : '/images/avatars/default-female.png';
   },
 };
+
+// 🆕 EXPORT NOVOG TIPA ZA KORIŠĆENJE U KOMPONENTAMA
+export type { ZaposleniDropdownItem };

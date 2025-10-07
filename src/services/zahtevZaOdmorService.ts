@@ -17,16 +17,18 @@ export const zahtevZaOdmorService = {
     return response.data;
   },
 
+  // ✅ ISPRAVKA: Koristi PUT umesto PATCH i /odobri umesto /approve
   async approve(id: number, napomena?: string): Promise<ZahtevZaOdmor> {
-    const response = await api.patch<ZahtevZaOdmor>(`/zahtevzaodmor/${id}/approve`, {
-      napomenaOdgovora: napomena,
+    const response = await api.put<ZahtevZaOdmor>(`/zahtevzaodmor/${id}/odobri`, {
+      napomena: napomena,  // Backend očekuje 'napomena', ne 'napomenaOdgovora'
     });
     return response.data;
   },
 
+  // ✅ ISPRAVKA: Koristi PUT umesto PATCH i /odbaci umesto /reject
   async reject(id: number, napomena?: string): Promise<ZahtevZaOdmor> {
-    const response = await api.patch<ZahtevZaOdmor>(`/zahtevzaodmor/${id}/reject`, {
-      napomenaOdgovora: napomena,
+    const response = await api.put<ZahtevZaOdmor>(`/zahtevzaodmor/${id}/odbaci`, {
+      napomena: napomena,  // Backend očekuje 'napomena', ne 'napomenaOdgovora'
     });
     return response.data;
   },

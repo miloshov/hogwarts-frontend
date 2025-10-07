@@ -32,9 +32,27 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zahtevZaOdmorService } from '../services/zahtevZaOdmorService';
-import { zaposleniService } from '../services/zaposleniService';
-import { ZahtevZaOdmor, ZahtevZaOdmorDto, Zaposleni } from '../types';
+import { zaposleniService, ZaposleniDropdownItem } from '../services/zaposleniService';
+import { ZahtevZaOdmor, ZahtevZaOdmorDto } from '../types';
 import LoadingSpinner from '../components/LoadingSpinner';
+
+// ✅ NOVO: Tip za GET response koji ima drugačiji format od ZahtevZaOdmor
+interface ZahtevZaOdmorListItem {
+  id: number;
+  zaposleniId: number;
+  zaposleniIme: string;  // Umesto zaposleni objekta
+  odsekNaziv?: string;
+  datumOd: string;
+  datumDo: string;
+  brojDana: number;
+  razlog?: string;
+  status: string;
+  tipOdmora: string;
+  datumZahteva: string;
+  datumOdgovora?: string;
+  odobrioKorisnikId?: number;
+  napomenaOdgovora?: string;
+}
 
 interface ZahtevFormData {
   zaposleniId: number;
@@ -46,7 +64,7 @@ interface ZahtevFormData {
 
 interface ApprovalDialogProps {
   open: boolean;
-  zahtev: ZahtevZaOdmor | null;
+  zahtev: ZahtevZaOdmorListItem | null;  // ✅ ISPRAVKA: Koristimo novi tip
   onClose: () => void;
   onApprove: (id: number, napomena?: string) => void;
   onReject: (id: number, napomena?: string) => void;
@@ -85,7 +103,8 @@ const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <Typography variant="h6">
-                {zahtev.zaposleni ? `${zahtev.zaposleni.ime} ${zahtev.zaposleni.prezime}` : 'Nepoznato'}
+                {/* ✅ ISPRAVKA: Koristi zaposleniIme umesto zaposleni objekta */}
+                {zahtev.zaposleniIme || 'Nepoznato'}
               </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -154,21 +173,22 @@ const tipOdmoraOptions = [
 
 const ZahteviZaOdmor: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [viewingZahtev, setViewingZahtev] = useState<ZahtevZaOdmor | null>(null);
+  const [viewingZahtev, setViewingZahtev] = useState<ZahtevZaOdmorListItem | null>(null);  // ✅ ISPRAVKA
   const [approvalDialog, setApprovalDialog] = useState(false);
-  const [selectedZahtev, setSelectedZahtev] = useState<ZahtevZaOdmor | null>(null);
+  const [selectedZahtev, setSelectedZahtev] = useState<ZahtevZaOdmorListItem | null>(null);  // ✅ ISPRAVKA
   const queryClient = useQueryClient();
 
   const { control, handleSubmit, reset, watch, formState: { errors } } = useForm<ZahtevFormData>();
 
-  const { data: zahteviZaOdmor, isLoading } = useQuery({
+  const { data: zahteviZaOdmor, isLoading } = useQuery<ZahtevZaOdmorListItem[]>({
     queryKey: ['zahteviZaOdmor'],
     queryFn: zahtevZaOdmorService.getAll,
   });
 
+  // ✅ IZMENA: Koristi novi getDropdown() metod umesto getAll()
   const { data: zaposleni } = useQuery({
-    queryKey: ['zaposleni'],
-    queryFn: zaposleniService.getAll,
+    queryKey: ['zaposleni-dropdown'],
+    queryFn: zaposleniService.getDropdown,
   });
 
   const createMutation = useMutation({
@@ -214,11 +234,11 @@ const ZahteviZaOdmor: React.FC = () => {
     setOpen(true);
   };
 
-  const handleView = (zahtev: ZahtevZaOdmor) => {
+  const handleView = (zahtev: ZahtevZaOdmorListItem) => {  // ✅ ISPRAVKA
     setViewingZahtev(zahtev);
   };
 
-  const handleApproval = (zahtev: ZahtevZaOdmor) => {
+  const handleApproval = (zahtev: ZahtevZaOdmorListItem) => {  // ✅ ISPRAVKA
     setSelectedZahtev(zahtev);
     setApprovalDialog(true);
   };
@@ -230,10 +250,14 @@ const ZahteviZaOdmor: React.FC = () => {
   };
 
   const onSubmit = (data: ZahtevFormData) => {
+    // ✅ Konvertuj datume u UTC format za PostgreSQL
+    const datumOdUtc = new Date(data.datumOd + 'T00:00:00.000Z').toISOString();
+    const datumDoUtc = new Date(data.datumDo + 'T00:00:00.000Z').toISOString();
+    
     const zahtevData: ZahtevZaOdmorDto = {
       zaposleniId: data.zaposleniId,
-      datumOd: data.datumOd,
-      datumDo: data.datumDo,
+      datumOd: datumOdUtc,
+      datumDo: datumDoUtc,
       razlog: data.razlog || undefined,
       tipOdmora: data.tipOdmora,
     };
@@ -253,24 +277,24 @@ const ZahteviZaOdmor: React.FC = () => {
     return <LoadingSpinner />;
   }
 
-  const zahteviNaCekanju = zahteviZaOdmor?.filter(z => z.status === 'Na_Cekanju') || [];
+  const zahteviNaCekanju = zahteviZaOdmor?.filter(z => z.status === 'NaCekanju') || [];  // ✅ ISPRAVKA
   const odobreniZahtevi = zahteviZaOdmor?.filter(z => z.status === 'Odobren') || [];
-  const odbijeniZahtevi = zahteviZaOdmor?.filter(z => z.status === 'Odbijen') || [];
+  const odbijeniZahtevi = zahteviZaOdmor?.filter(z => z.status === 'Odbacen') || [];  // ✅ ISPRAVKA
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Na_Cekanju': return 'warning';
+      case 'NaCekanju': return 'warning';  // ✅ ISPRAVKA
       case 'Odobren': return 'success';
-      case 'Odbijen': return 'error';
+      case 'Odbacen': return 'error';  // ✅ ISPRAVKA
       default: return 'default';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'Na_Cekanju': return 'Na čekanju';
+      case 'NaCekanju': return 'Na čekanju';  // ✅ ISPRAVKA
       case 'Odobren': return 'Odobren';
-      case 'Odbijen': return 'Odbijen';
+      case 'Odbacen': return 'Odbačen';  // ✅ ISPRAVKA
       default: return status;
     }
   };
@@ -363,7 +387,8 @@ const ZahteviZaOdmor: React.FC = () => {
             {zahteviZaOdmor?.map((zahtev) => (
               <TableRow key={zahtev.id}>
                 <TableCell>
-                  {zahtev.zaposleni ? `${zahtev.zaposleni.ime} ${zahtev.zaposleni.prezime}` : 'Nepoznato'}
+                  {/* ✅ ISPRAVKA: Koristi ZaposleniIme iz GET response-a */}
+                  {zahtev.zaposleniIme || 'Nepoznato'}
                 </TableCell>
                 <TableCell>{zahtev.tipOdmora}</TableCell>
                 <TableCell>
@@ -382,7 +407,7 @@ const ZahteviZaOdmor: React.FC = () => {
                   <IconButton onClick={() => handleView(zahtev)} color="info">
                     <ViewIcon />
                   </IconButton>
-                  {zahtev.status === 'Na_Cekanju' && (
+                  {zahtev.status === 'NaCekanju' && (  /* ✅ ISPRAVKA */
                     <IconButton onClick={() => handleApproval(zahtev)} color="primary">
                       <CheckIcon />
                     </IconButton>
@@ -419,9 +444,10 @@ const ZahteviZaOdmor: React.FC = () => {
                       error={!!errors.zaposleniId}
                       helperText={errors.zaposleniId?.message}
                     >
-                      {zaposleni?.filter(z => z.isActive).map((z) => (
+                      {/* ✅ IZMENA: Koristimo novi format podataka bez filtera */}
+                      {zaposleni?.map((z) => (
                         <MenuItem key={z.id} value={z.id}>
-                          {`${z.ime} ${z.prezime} - ${z.pozicija}`}
+                          {z.punoIme} - {z.pozicija}
                         </MenuItem>
                       ))}
                     </TextField>
@@ -546,7 +572,8 @@ const ZahteviZaOdmor: React.FC = () => {
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Typography variant="h6">
-                  {viewingZahtev.zaposleni ? `${viewingZahtev.zaposleni.ime} ${viewingZahtev.zaposleni.prezime}` : 'Nepoznato'}
+                  {/* ✅ ISPRAVKA: Koristi zaposleniIme umesto zaposleni objekta */}
+                  {viewingZahtev.zaposleniIme || 'Nepoznato'}
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -603,7 +630,6 @@ const ZahteviZaOdmor: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog za odobravanje */}
       <ApprovalDialog
         open={approvalDialog}
         zahtev={selectedZahtev}
