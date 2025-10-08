@@ -1,6 +1,8 @@
 import { api } from './apiService';
 import { Zaposleni, ZaposleniDto, Odsek, FileUploadResponse } from '../types';
 
+const API_BASE_URL = 'http://localhost:5241/api';
+
 // 🆕 NOVI TIP ZA DROPDOWN - jednostavan objekat
 interface ZaposleniDropdownItem {
   id: number;

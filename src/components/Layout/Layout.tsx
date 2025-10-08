@@ -27,6 +27,7 @@ import {
   People as PeopleIcon,
   AttachMoney as AttachMoneyIcon,
   BeachAccess as BeachAccessIcon,
+  AccountTree as StructureIcon,
   Logout as LogoutIcon,
   AccountCircle as AccountCircleIcon,
   Settings as SettingsIcon,
@@ -53,6 +54,7 @@ const menuItems: MenuItem[] = [
   { text: 'Zaposleni', path: '/zaposleni', icon: <PeopleIcon /> },
   { text: 'Plate', path: '/plate', icon: <AttachMoneyIcon /> },
   { text: 'Zahtevi za odmor', path: '/zahtevi-za-odmor', icon: <BeachAccessIcon /> },
+  { text: 'Struktura', path: '/struktura', icon: <StructureIcon /> },
 ];
 
 const pathTitles: { [key: string]: string } = {
@@ -60,6 +62,7 @@ const pathTitles: { [key: string]: string } = {
   '/zaposleni': 'Zaposleni',
   '/plate': 'Plate',
   '/zahtevi-za-odmor': 'Zahtevi za odmor',
+  '/struktura': 'Organizaciona struktura',
 };
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {

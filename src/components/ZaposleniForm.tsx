@@ -15,14 +15,17 @@ import { useForm, Controller } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { Zaposleni, ZaposleniDto, Pol } from '../types/types';
 import { zaposleniService } from '../services/zaposleniService';
+import { strukturaService } from '../services/strukturaService'; // Dodano za pozicije
 import LoadingSpinner from './LoadingSpinner';
 import Avatar from '../components/Avatar';
 import ImageUpload from '../components/ImageUpload';
+// Dodavanje pozicijId u formu podatke
 interface ZaposleniFormData {
   ime: string;
   prezime: string;
   email: string;
   pozicija: string;
+  pozicijaId: number | undefined; // Dodano za dropdown
   datumZaposlenja: string;
   datumRodjenja: string;
   imeOca: string;
@@ -55,10 +58,18 @@ const ZaposleniForm: React.FC<ZaposleniFormProps> = ({
   
   // Watch pol for Avatar preview
   const polValue = watch('pol');
-const { data: odseci } = useQuery({
-  queryKey: ['odseci'],
-  queryFn: zaposleniService.getOdseci,
-});
+
+  // Query za odseke
+  const { data: odseci } = useQuery({
+    queryKey: ['odseci'],
+    queryFn: zaposleniService.getOdseci,
+  });
+
+  // Query za pozicije
+  const { data: pozicije } = useQuery({
+    queryKey: ['pozicije'],
+    queryFn: strukturaService.getPozicije,
+  });
   useEffect(() => {
     if (editingZaposleni) {
       setCurrentEmployee(editingZaposleni);
@@ -67,6 +78,7 @@ const { data: odseci } = useQuery({
         prezime: editingZaposleni.prezime,
         email: editingZaposleni.email,
         pozicija: editingZaposleni.pozicija,
+        pozicijaId: editingZaposleni.pozicijaId,
         datumZaposlenja: editingZaposleni.datumZaposlenja.split('T')[0],
         datumRodjenja: editingZaposleni.datumRodjenja.split('T')[0],
         imeOca: editingZaposleni.imeOca,
@@ -83,6 +95,7 @@ const { data: odseci } = useQuery({
         prezime: '',
         email: '',
         pozicija: '',
+        pozicijaId: undefined,
         datumZaposlenja: '',
         datumRodjenja: '',
         imeOca: '',
@@ -223,18 +236,25 @@ const { data: odseci } = useQuery({
             </Grid>
             <Grid item xs={12} sm={6}>
               <Controller
-                name="pozicija"
+                name="pozicijaId"
                 control={control}
-                defaultValue=""
-                rules={{ required: 'Pozicija je obavezna' }}
                 render={({ field }) => (
                   <TextField
                     {...field}
+                    select
                     label="Pozicija"
                     fullWidth
-                    error={!!errors.pozicija}
-                    helperText={errors.pozicija?.message}
-                  />
+                    value={field.value || ''}
+                    error={!!errors.pozicijaId}
+                    helperText={errors.pozicijaId?.message}
+                  >
+                    <MenuItem value="">Odaberite poziciju</MenuItem>
+                    {pozicije?.map((pozicija) => (
+                      <MenuItem key={pozicija.id} value={pozicija.id}>
+                        {pozicija.naziv} (Nivo {pozicija.nivo})
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 )}
               />
             </Grid>

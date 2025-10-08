@@ -17,6 +17,7 @@ export interface Zaposleni {
   prezime: string;
   email: string;
   pozicija: string;
+  pozicijaId?: number; // Dodano za nova polja
   datumZaposlenja: string;
   datumRodjenja: string;
   imeOca: string;
@@ -42,6 +43,7 @@ export interface ZaposleniDto {
   prezime: string;
   email: string;
   pozicija: string;
+  pozicijaId?: number; // Dodano za dropdown izbor pozicije
   datumZaposlenja: string;
   datumRodjenja: string;
   imeOca: string;

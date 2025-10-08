@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard';
 import Zaposleni from './pages/Zaposleni';
 import Plate from './pages/Plate';
 import ZahteviZaOdmor from './pages/ZahteviZaOdmor';
+import Struktura from './pages/Struktura';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Kreiranje tema
@@ -75,6 +76,7 @@ function App() {
                           <Route path="/zaposleni" element={<Zaposleni />} />
                           <Route path="/plate" element={<Plate />} />
                           <Route path="/zahtevi-za-odmor" element={<ZahteviZaOdmor />} />
+                          <Route path="/struktura" element={<Struktura />} />
                         </Routes>
                       </Layout>
                     </ProtectedRoute>
