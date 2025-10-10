@@ -29,6 +29,14 @@ import {
   Stack,
   Tooltip,
   CardHeader,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -40,6 +48,8 @@ import {
   AccountTree as TreeIcon,
   Business as CompanyIcon,
   Colorize as ColorIcon,
+  ViewList as ListIcon,
+  ViewModule as GridIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import strukturaService, { OrgChartNode, Pozicija } from '../services/strukturaService';
@@ -228,6 +238,7 @@ export default function Struktura() {
     nivo: 5,
     boja: '#95a5a6',
   });
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); // 📋 Dodato za view toggle
 
   const queryClient = useQueryClient();
 
@@ -283,6 +294,14 @@ export default function Struktura() {
     },
   });
 
+  // 🗑️ Mutation za brisanje pozicije
+  const deletePozicijaMutation = useMutation({
+    mutationFn: strukturaService.deletePozicija,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pozicije'] });
+    },
+  });
+
   // 🎛️ Handlers
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -323,6 +342,20 @@ export default function Struktura() {
       });
     } else {
       createPozicijaMutation.mutate(pozicijaForm);
+    }
+  };
+
+  // 🗑️ Handler za brisanje pozicije
+  const handleDeletePozicija = (pozicija: Pozicija) => {
+    if (window.confirm(`Da li ste sigurni da želite da obrišete poziciju "${pozicija.naziv}"?`)) {
+      deletePozicijaMutation.mutate(pozicija.id);
+    }
+  };
+
+  // 📋 Handler za view mode toggle
+  const handleViewModeChange = (_: React.MouseEvent<HTMLElement>, newViewMode: 'list' | 'grid') => {
+    if (newViewMode !== null) {
+      setViewMode(newViewMode);
     }
   };
 
@@ -377,6 +410,185 @@ export default function Struktura() {
     );
   };
 
+  // 📋 Render List View za pozicije
+  const renderPozicijeListView = () => {
+    if (!pozicije || pozicije.length === 0) {
+      return (
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            Nema definisanih pozicija
+          </Typography>
+        </Paper>
+      );
+    }
+
+    return (
+      <TableContainer component={Paper} elevation={2}>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ bgcolor: 'grey.50' }}>
+              <TableCell><strong>Naziv pozicije</strong></TableCell>
+              <TableCell><strong>Opis</strong></TableCell>
+              <TableCell><strong>Nivo</strong></TableCell>
+              <TableCell><strong>Boja</strong></TableCell>
+              <TableCell align="center"><strong>Datum kreiranja</strong></TableCell>
+              <TableCell align="center"><strong>Akcije</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {pozicije.map((pozicija) => (
+              <TableRow key={pozicija.id} hover>
+                <TableCell>
+                  <Typography variant="body2" fontWeight="medium">
+                    {pozicija.naziv}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" color="text.secondary">
+                    {pozicija.opis || '-'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={strukturaService.getLevelLabel(pozicija.nivo)}
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Box
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        bgcolor: pozicija.boja || strukturaService.getDefaultColorForLevel(pozicija.nivo),
+                        borderRadius: '50%',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                      {pozicija.boja || 'Default'}
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell align="center">
+                  <Typography variant="body2" color="text.secondary">
+                    {new Date(pozicija.datumKreiranja).toLocaleDateString('sr-RS')}
+                  </Typography>
+                </TableCell>
+                <TableCell align="center">
+                  <Box display="flex" gap={1} justifyContent="center">
+                    <Tooltip title="Uredi poziciju">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenPozicijaDialog(pozicija)}
+                        color="primary"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Obriši poziciju">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeletePozicija(pozicija)}
+                        color="error"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+
+  // 🃏 Render Grid View za pozicije (postojeći)
+  const renderPozicijeGridView = () => {
+    if (!pozicije || pozicije.length === 0) {
+      return (
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            Nema definisanih pozicija
+          </Typography>
+        </Paper>
+      );
+    }
+
+    return (
+      <Grid container spacing={2}>
+        {pozicije.map((pozicija) => (
+          <Grid item xs={12} sm={6} md={4} key={pozicija.id}>
+            <Card
+              elevation={2}
+              sx={{
+                borderLeft: `5px solid ${pozicija.boja || strukturaService.getDefaultColorForLevel(pozicija.nivo)}`,
+                '&:hover': { boxShadow: 4 },
+              }}
+            >
+              <CardContent>
+                <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                  <Typography variant="h6" component="h3">
+                    {pozicija.naziv}
+                  </Typography>
+                  <Box>
+                    <Tooltip title="Uredi poziciju">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenPozicijaDialog(pozicija)}
+                        color="primary"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Obriši poziciju">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeletePozicija(pozicija)}
+                        color="error"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Box>
+                
+                {pozicija.opis && (
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    {pozicija.opis}
+                  </Typography>
+                )}
+                
+                <Stack direction="row" spacing={1}>
+                  <Chip
+                    label={strukturaService.getLevelLabel(pozicija.nivo)}
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                  />
+                  <Chip
+                    icon={<ColorIcon />}
+                    label={pozicija.boja || 'Default'}
+                    size="small"
+                    sx={{
+                      bgcolor: pozicija.boja || strukturaService.getDefaultColorForLevel(pozicija.nivo),
+                      color: 'white',
+                    }}
+                  />
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    );
+  };
+
   const renderPozicijeManagement = () => {
     if (pozicijeLoading) {
       return <LoadingSpinner />;
@@ -394,69 +606,39 @@ export default function Struktura() {
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h6">Upravljanje pozicijama</Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenPozicijaDialog()}
-          >
-            Dodaj poziciju
-          </Button>
+          <Box display="flex" gap={2} alignItems="center">
+            {/* 📋 View Toggle */}
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={handleViewModeChange}
+              aria-label="view mode"
+              size="small"
+            >
+              <ToggleButton value="list" aria-label="list view">
+                <Tooltip title="Lista">
+                  <ListIcon />
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="grid" aria-label="grid view">
+                <Tooltip title="Kartice">
+                  <GridIcon />
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+            
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenPozicijaDialog()}
+            >
+              Dodaj poziciju
+            </Button>
+          </Box>
         </Box>
 
-        <Grid container spacing={2}>
-          {pozicije?.map((pozicija) => (
-            <Grid item xs={12} sm={6} md={4} key={pozicija.id}>
-              <Card
-                elevation={2}
-                sx={{
-                  borderLeft: `5px solid ${pozicija.boja || strukturaService.getDefaultColorForLevel(pozicija.nivo)}`,
-                  '&:hover': { boxShadow: 4 },
-                }}
-              >
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                    <Typography variant="h6" component="h3">
-                      {pozicija.naziv}
-                    </Typography>
-                    <Box>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenPozicijaDialog(pozicija)}
-                        color="primary"
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                  
-                  {pozicija.opis && (
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      {pozicija.opis}
-                    </Typography>
-                  )}
-                  
-                  <Stack direction="row" spacing={1}>
-                    <Chip
-                      label={strukturaService.getLevelLabel(pozicija.nivo)}
-                      size="small"
-                      variant="outlined"
-                      color="primary"
-                    />
-                    <Chip
-                      icon={<ColorIcon />}
-                      label={pozicija.boja || 'Default'}
-                      size="small"
-                      sx={{
-                        bgcolor: pozicija.boja || strukturaService.getDefaultColorForLevel(pozicija.nivo),
-                        color: 'white',
-                      }}
-                    />
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        {/* 📋 Conditional rendering based on view mode */}
+        {viewMode === 'list' ? renderPozicijeListView() : renderPozicijeGridView()}
       </Box>
     );
   };

@@ -44,12 +44,12 @@ export interface ZaposleniHijerarhija {
 
 // 🏗️ STRUKTURA API SERVICE
 class StrukturaService {
-  private baseUrl = `${API_BASE_URL}/struktural`;
+  private baseUrl = `${API_BASE_URL}/struktura`;
 
   /**
    * 🌳 Dohvata kompletnu organizacionu strukturu
    */
-  async getOrganizationChart(): Promise<OrgChartNode[]> {
+  getOrganizationChart = async (): Promise<OrgChartNode[]> => {
     try {
       const response = await axios.get(`${this.baseUrl}/org-chart`);
       return response.data;
@@ -62,7 +62,7 @@ class StrukturaService {
   /**
    * 📋 Dohvata sve dostupne pozicije
    */
-  async getPozicije(): Promise<Pozicija[]> {
+  getPozicije = async (): Promise<Pozicija[]> => {
     try {
       const response = await axios.get(`${this.baseUrl}/pozicije`);
       return response.data;
@@ -75,7 +75,7 @@ class StrukturaService {
   /**
    * 👤 Dohvata hijerarhiju za određenog zaposlenog
    */
-  async getZaposleniHijerarhija(zaposleniId: number): Promise<ZaposleniHijerarhija> {
+  getZaposleniHijerarhija = async (zaposleniId: number): Promise<ZaposleniHijerarhija> => {
     try {
       const response = await axios.get(`${this.baseUrl}/zaposleni/${zaposleniId}/hijerarhija`);
       return response.data;
@@ -88,7 +88,7 @@ class StrukturaService {
   /**
    * 🔄 Ažurira hijerarhiju zaposlenog
    */
-  async updateHijerarhija(request: UpdateHijerarhijeRequest): Promise<void> {
+  updateHijerarhija = async (request: UpdateHijerarhijeRequest): Promise<void> => {
     try {
       await axios.put(`${this.baseUrl}/update-hijerarhija`, request);
     } catch (error) {
@@ -100,7 +100,7 @@ class StrukturaService {
   /**
    * ➕ Kreira novu poziciju
    */
-  async createPozicija(pozicija: Omit<Pozicija, 'id' | 'datumKreiranja' | 'isActive'>): Promise<Pozicija> {
+  createPozicija = async (pozicija: Omit<Pozicija, 'id' | 'datumKreiranja' | 'isActive'>): Promise<Pozicija> => {
     try {
       const response = await axios.post(`${this.baseUrl}/pozicije`, pozicija);
       return response.data;
@@ -113,7 +113,7 @@ class StrukturaService {
   /**
    * ✏️ Ažurira postojeću poziciju
    */
-  async updatePozicija(id: number, pozicija: Omit<Pozicija, 'id' | 'datumKreiranja' | 'isActive'>): Promise<Pozicija> {
+  updatePozicija = async (id: number, pozicija: Omit<Pozicija, 'id' | 'datumKreiranja' | 'isActive'>): Promise<Pozicija> => {
     try {
       const response = await axios.put(`${this.baseUrl}/pozicije/${id}`, pozicija);
       return response.data;
@@ -126,7 +126,7 @@ class StrukturaService {
   /**
    * 🗑️ Briše poziciju
    */
-  async deletePozicija(id: number): Promise<void> {
+  deletePozicija = async (id: number): Promise<void> => {
     try {
       await axios.delete(`${this.baseUrl}/pozicije/${id}`);
     } catch (error) {
@@ -138,7 +138,7 @@ class StrukturaService {
   /**
    * 🎨 Helper: Dobija default boju za poziciu na osnovu nivoa
    */
-  getDefaultColorForLevel(nivo: number): string {
+  getDefaultColorForLevel = (nivo: number): string => {
     const levelColors: Record<number, string> = {
       1: '#e74c3c', // CEO - crvena
       2: '#9b59b6', // Director - ljubičasta
@@ -153,7 +153,7 @@ class StrukturaService {
   /**
    * 🏷️ Helper: Dobija string label za nivo pozicije
    */
-  getLevelLabel(nivo: number): string {
+  getLevelLabel = (nivo: number): string => {
     const levelLabels: Record<number, string> = {
       1: 'Izvršni nivo',
       2: 'Direktorski nivo', 

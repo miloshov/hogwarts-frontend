@@ -13,7 +13,7 @@ import Dashboard from './pages/Dashboard';
 import Zaposleni from './pages/Zaposleni';
 import Plate from './pages/Plate';
 import ZahteviZaOdmor from './pages/ZahteviZaOdmor';
-import Struktura from './pages/Struktura';
+import InventarPage from './pages/InventarPage';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Kreiranje tema
@@ -31,7 +31,7 @@ const theme = createTheme({
   },
 });
 
-// Kreiranje QueryClient instance
+// Kreiranje QueryClient instance - OVO JE NEDOSTAJALO!
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -76,7 +76,7 @@ function App() {
                           <Route path="/zaposleni" element={<Zaposleni />} />
                           <Route path="/plate" element={<Plate />} />
                           <Route path="/zahtevi-za-odmor" element={<ZahteviZaOdmor />} />
-                          <Route path="/struktura" element={<Struktura />} />
+                          <Route path="/inventar" element={<InventarPage />} />
                         </Routes>
                       </Layout>
                     </ProtectedRoute>

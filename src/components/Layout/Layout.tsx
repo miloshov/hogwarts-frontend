@@ -1,3 +1,4 @@
+import InventoryIcon from '@mui/icons-material/Inventory';
 import React, { useState } from 'react';
 import {
   AppBar,
@@ -55,6 +56,7 @@ const menuItems: MenuItem[] = [
   { text: 'Plate', path: '/plate', icon: <AttachMoneyIcon /> },
   { text: 'Zahtevi za odmor', path: '/zahtevi-za-odmor', icon: <BeachAccessIcon /> },
   { text: 'Struktura', path: '/struktura', icon: <StructureIcon /> },
+  { text: 'Inventar', icon: <InventoryIcon />, path: '/inventar' },
 ];
 
 const pathTitles: { [key: string]: string } = {

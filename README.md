@@ -1,201 +1,221 @@
-# Hogwarts HR Management System - Frontend
+# Hogwarts HR - Frontend
 
-Moderna React aplikacija za upravljanje ljudskim resursima, izgrađena sa TypeScript-om i Material-UI komponentama.
+## 📋 Pregled
 
-## 🛠️ Tech Stack
+Moderna React aplikacija za Hogwarts HR sistem izgrađena sa TypeScript, Material-UI dizajnom i responzivnim korisničkim interfejsom.
 
-- **React 18** sa **TypeScript**
-- **Vite** (za brže buildovanje)
-- **Material-UI (MUI)** za komponente i dizajn
-- **React Router** za navigaciju
-- **Axios** za API komunikaciju
-- **React Hook Form** za formulare
-- **TanStack Query** za state management API poziva
-- **Day.js** za rad sa datumima
+## 🚀 Funkcionalnosti
 
-## 📋 Preduslovи
+### 👥 Upravljanje Zaposlenima
+- Lista zaposlenih sa pretraga
+- Kreiranje i editovanje profila
+- Organizaciona struktura
 
-- **Node.js** (verzija 18 ili novija)
-- **npm** ili **yarn**
-- **Backend API** pokrenut na `http://localhost:5241`
+### 💰 Plate
+- Pregled plata zaposlenih
+- Mesečni obračuni
+- Izveštavanje
 
-## 🚀 Instaliranje
+### 🏖️ Zahtevi za Odmor
+- Kreiranje zahteva za odmor
+- Praćenje statusa
+- Kalendar pregled
 
-1. **Navigirajte u frontend direktorijum:**
-   ```bash
-   cd frontend
-   ```
+### 📦 **NOVO: Inventar Modul**
+- 📊 **Dashboard sa statistikama**
+- 📝 **Lista inventara** - pretraga, filtriranje, paginacija
+- ➕ **Kreiranje stavki** - kompletna forma sa validacijom
+- ✏️ **Editovanje** - izmena postojećih stavki
+- 🔍 **Detalji** - prikaz svih informacija o stavci
+- 📱 **QR kodovi** - generisanje i download
+- 👤 **Dodela/Vraćanje** - upravljanje dodeljena oprema
+- 📈 **Statistike** - grafici i vizuelni prikazi
 
-2. **Instalirajte dependencies:**
-   ```bash
-   npm install
-   ```
+## 🛠️ Tehnologije
 
-3. **Pokrenite development server:**
-   ```bash
-   npm run dev
-   ```
+- **React 18** - Frontend framework
+- **TypeScript** - Type safety
+- **Material-UI (MUI)** - UI komponente
+- **React Router** - Navigacija
+- **TanStack Query** - State management i API
+- **DayJS** - Date manipulation
+- **Recharts** - Grafici i statistike
+- **Vite** - Build tool
 
-4. **Otvorite aplikaciju u browser-u:**
-   ```
-   http://localhost:3000
-   ```
-
-## 📁 Struktura projekta
+## 📁 Struktura Projekta
 
 ```
-frontend/
-├── src/
-│   ├── components/           # Reusable komponente
-│   │   ├── Layout/          # Layout komponente
-│   │   └── LoadingSpinner.tsx
-│   ├── contexts/            # React Context providers
-│   │   └── AuthContext.tsx  # Authentication context
-│   ├── pages/               # Stranice aplikacije
-│   │   ├── Dashboard.tsx    # Glavna stranica
-│   │   ├── Login.tsx        # Stranica za prijavu
-│   │   ├── Zaposleni.tsx    # Upravljanje zaposlenim
-│   │   ├── Plate.tsx        # Upravljanje platama
-│   │   └── ZahteviZaOdmor.tsx # Zahtevi za odmor
-│   ├── services/            # API servisi
-│   │   ├── authService.ts   # Autentifikacija
-│   │   ├── zaposleniService.ts
-│   │   ├── plataService.ts
-│   │   └── zahtevZaOdmorService.ts
-│   ├── types/               # TypeScript tipovi
-│   │   └── index.ts
-│   ├── App.tsx              # Glavna komponenta
-│   ├── main.tsx             # Entry point
-│   └── index.css            # Globalni stilovi
-├── package.json
-├── vite.config.ts
-└── README.md
+src/
+├── components/
+│   ├── Layout/           # Layout komponente
+│   ├── inventar/         # Inventar komponente
+│   │   ├── InventarLista.tsx
+│   │   ├── InventarForma.tsx
+│   │   ├── InventarDetalji.tsx
+│   │   └── InventarStatistike.tsx
+│   └── Dashboard/        # Dashboard komponente
+├── pages/
+│   ├── InventarPage.tsx  # Glavni inventar page
+│   ├── Dashboard.tsx
+│   └── Login.tsx
+├── services/
+│   ├── inventarService.ts # API komunikacija
+│   └── authService.ts
+└── contexts/
+    └── AuthContext.tsx   # Autentifikacija
 ```
 
-## 🔧 Komande
+## 🎨 Inventar Komponente
 
-- **Development server:**
-  ```bash
-  npm run dev
-  ```
+### InventarPage
+Glavni kontejner sa tab navigacijom:
+- Lista inventara
+- Kreiranje nove stavke
+- Statistike
 
-- **Build za produkciju:**
-  ```bash
-  npm run build
-  ```
+### InventarLista
+Tabela sa funkcionalnostima:
+- ✅ Pretraga po nazivu, opisu, serijskom broju
+- ✅ Paginacija
+- ✅ Sort funkcionalnost
+- ✅ Akcije (Edit, Delete, QR, Dodeli/Vrati)
+- ✅ Status indikatori (stanje, dostupnost)
 
-- **Preview build-a:**
-  ```bash
-  npm run preview
-  ```
+### InventarForma
+Komprehenzivna forma:
+- ✅ Osnovne informacije (naziv, kategorija, lokacija)
+- ✅ Identifikatori (serijski broj, bar kod)
+- ✅ Finansijske informacije (nabavna cena, vrednost)
+- ✅ Datumi (nabavka, garancija) - DayJS integracija
+- ✅ Validacija svih polja
+- ✅ Auto-generisanje kodova
 
-- **Linting:**
-  ```bash
-  npm run lint
-  ```
+### InventarDetalji
+Detaljni prikaz:
+- ✅ Sve informacije o stavci
+- ✅ QR kod generisanje
+- ✅ Dodela/vraćanje funkcionalnost
+- ✅ Audit trail (datum kreiranja, izmene)
 
-## ⚙️ Konfiguracija
+### InventarStatistike
+Vizuelni dashboard:
+- ✅ Ukupan broj stavki
+- ✅ Ukupna vrednost
+- ✅ Distribucija po stanju (Pie chart)
+- ✅ Stavke po kategorijama (Bar chart)
+- ✅ Stavke po lokacijama (Bar chart)
+- ✅ KPI kartice
 
-### API Endpoint
+## 🔗 API Integracija
 
-API endpoint je konfigurisan u `vite.config.ts` fajlu:
-
+### inventarService.ts
 ```typescript
-server: {
-  port: 3000,
-  proxy: {
-    '/api': {
-      target: 'http://localhost:5241',
-      changeOrigin: true,
-      secure: false,
-    },
-  },
-}
+// Glavni API calls
+getAllStavke()           // Lista svih stavki
+getStavkaById(id)        // Detalji stavke
+createStavka(data)       // Kreiranje
+updateStavka(id, data)   // Ažuriranje
+deleteStavka(id)         // Brisanje
+dodelilStavku(request)   // Dodela korisniku
+vratiStavku(id, note)    // Vraćanje
+generateQrCode(id)       // QR kod download
+getStatistike()          // Dashboard statistike
 ```
 
-### Environment Variables
+## 📱 UI/UX Features
 
-Kreiranje `.env` fajla u root direktorijumu za custom konfiguraciju:
+### Responzivnost
+- ✅ Desktop optimizovan
+- ✅ Tablet podržan
+- ✅ Mobile ready
 
-```env
-VITE_API_BASE_URL=http://localhost:5241/api
-VITE_APP_TITLE=Hogwarts HR System
+### Korisničko iskustvo
+- ✅ Loading indikatori
+- ✅ Error handling sa user-friendly porukama
+- ✅ Confirmation dialozi
+- ✅ Toast notifikacije
+- ✅ Intuitivna navigacija
+
+### Accessibility
+- ✅ ARIA labeli
+- ✅ Keyboard navigacija
+- ✅ High contrast support
+- ✅ Screen reader friendly
+
+## ⚙️ Pokretanje
+
+```bash
+# Instaliraj dependencies
+npm install
+
+# Development server
+npm run dev
+
+# Build za produkciju
+npm run build
+
+# Preview build-a
+npm run preview
 ```
 
-## 🎯 Funkcionalnosti
+## 📦 Dependencies
 
-### 🔐 Autentifikacija
-- Login sa email i lozinkom
-- Automatska redirectiя na login stranu pri 401 greškama
-- Token-based authentication
+### Core
+- react, react-dom
+- typescript
+- vite
 
-### 📊 Dashboard
-- Pregled statistika (zaposleni, odseci, plate, zahtevi)
-- Kartice sa key metrics
-- Liste najnovijih aktivnosti
+### UI
+- @mui/material
+- @mui/icons-material
+- @mui/x-date-pickers
 
-### 👥 Upravljanje zaposlenim
-- CRUD operacije (Create, Read, Update, Delete)
-- Pretraga i filtriranje
+### Utilities
+- @tanstack/react-query
+- react-router-dom
+- dayjs
+- recharts
+
+## 🔐 Autentifikacija
+
+Aplikacija koristi JWT tokene za autentifikaciju. AuthContext upravlja stanjem korisnika kroz cellu aplikaciju.
+
+## 🎯 Trenutni Status
+
+### ✅ Kompletno
+- Osnovni layout i navigacija
+- Autentifikacija sistem
+- Dashboard sa osnovnim funkcionalnostima
+- Inventar UI komponente kreiranje
+
+### 🚧 U razvoju
+- Inventar API integracija (401 Unauthorized greške)
+- Error handling poboljšanje
+- Loading states optimizacija
 - Validacija formi
-- Pregled detaljnih informacija
 
-### 💰 Upravljanje platama
-- Kreiranje i editovanje plata
-- Statistike (ukupne, prosečne, najviše, najniže plate)
-- Automatska kalkulacija neto iznosa
-- Linkovanje sa zaposlenim
+### 📋 Planirano
+- Unit testovi
+- E2E testiranje
+- Performance optimizacije
+- PWA funkcionalnosti
+- Dark mode tema
 
-### 🏖️ Zahtevi za odmor
-- Kreiranje novih zahteva
-- Odobravanje/odbijanje zahteva
-- Kalkulacija broja dana
-- Status tracking (Na čekanju, Odobren, Odbijen)
-- Napomene za administratore
+## 🐛 Poznati problemi
 
-## 🔌 API Integration
+1. **API 401 errors** - backend autentifikacija treba podešavanje
+2. **Date picker locale** - DayJS srpski jezik podešavanje
+3. **Responsive charts** - optimizacija za manje ekrane
 
-Aplikacija koristi Axios za API komunikaciju sa backend-om. Svi API pozivi su organizовани u servise:
+## 🚀 Sledeći koraci
 
-- `authService.ts` - Login, logout, token management
-- `zaposleniService.ts` - CRUD za zaposlene i odseke
-- `plataService.ts` - CRUD za plate
-- `zahtevZaOdmorService.ts` - CRUD i odobravanje zahteva
+1. Rešavanje API autentifikacije
+2. Testiranje svih CRUD operacija
+3. UI polish i optimizacije
+4. Performance monitoring
+5. Accessibility testiranje
 
-## 🎨 UI/UX
+---
 
-- **Responsive design** - optimizovan za desktop i mobilne uređaje
-- **Material Design** komponente via MUI
-- **Dark/Light mode** support
-- **Loading states** i **error handling**
-- **Form validation** sa clear error messages
-- **Confirmation dialogs** za kritične akcije
-
-## 🐛 Troubleshooting
-
-### Česti problemi:
-
-1. **"Network Error" ili connection refused:**
-   - Proverite da li je backend pokrenut na `http://localhost:5241`
-   - Proverite CORS konfiguraciju na backend-u
-
-2. **"401 Unauthorized" greške:**
-   - Obriкajte localStorage (`localStorage.clear()`)
-   - Prijavite se ponovo
-
-3. **Dependencies konflikti:**
-   ```bash
-   rm -rf node_modules package-lock.json
-   npm install
-   ```
-
-## 🔄 Development Workflow
-
-1. **Pokrenite backend** (`dotnet run` u backend direktorijumu)
-2. **Pokrenite frontend** (`npm run dev` u frontend direktorijumu)
-3. **Aplikacija je dostupna** na `http://localhost:3000`
-4. **Hot reload** je omogućen - promene se automatski učitavaju
-
-## 📝 Licenca
-
-Ovaj projekat je kreiran za edukacione svrhe.
+**Autor:** MiniMax Agent  
+**Datum poslednje izmene:** 11. Oktobar 2025
