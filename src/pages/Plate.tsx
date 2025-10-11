@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Box,
+  Container,
+  Typography,
   Paper,
+  Tab,
+  Tabs,
+  Box,
+  useTheme,
+  alpha,
   Table,
   TableBody,
   TableCell,
@@ -10,7 +16,6 @@ import {
   TableRow,
   Button,
   IconButton,
-  Typography,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -34,6 +39,12 @@ import { zaposleniService } from '../services/zaposleniService';
 import { Plata, PlataDto, Zaposleni } from '../types';
 import LoadingSpinner from '../components/LoadingSpinner';
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
 interface PlataFormData {
   zaposleniId: number;
   osnovna: number;
@@ -43,10 +54,39 @@ interface PlataFormData {
   napomene: string;
 }
 
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`plate-tabpanel-${index}`}
+      aria-labelledby={`plate-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `plate-tab-${index}`,
+    'aria-controls': `plate-tabpanel-${index}`,
+  };
+}
+
 const Plate: React.FC = () => {
+  const [tabValue, setTabValue] = useState(0);
   const [open, setOpen] = useState(false);
   const [editingPlata, setEditingPlata] = useState<Plata | null>(null);
   const [viewingPlata, setViewingPlata] = useState<Plata | null>(null);
+  const theme = useTheme();
   const queryClient = useQueryClient();
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<PlataFormData>();
@@ -67,6 +107,7 @@ const Plate: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['plate'] });
       setOpen(false);
       reset();
+      setTabValue(0); // Vrati na listu
     },
   });
 
@@ -78,6 +119,7 @@ const Plate: React.FC = () => {
       setOpen(false);
       setEditingPlata(null);
       reset();
+      setTabValue(0); // Vrati na listu
     },
   });
 
@@ -87,6 +129,13 @@ const Plate: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['plate'] });
     },
   });
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+    if (newValue !== 1) {
+      setEditingPlata(null); // Resetuj selekciju kada nije forma tab
+    }
+  };
 
   const handleCreate = () => {
     setEditingPlata(null);
@@ -99,6 +148,7 @@ const Plate: React.FC = () => {
       napomene: '',
     });
     setOpen(true);
+    setTabValue(1); // Prebaci na formu
   };
 
   const handleEdit = (plata: Plata) => {
@@ -112,6 +162,7 @@ const Plate: React.FC = () => {
       napomene: plata.napomene || '',
     });
     setOpen(true);
+    setTabValue(1); // Prebaci na formu
   };
 
   const handleDelete = (id: number) => {
@@ -151,124 +202,117 @@ const Plate: React.FC = () => {
   const najnizaPlata = plate?.length ? Math.min(...plate.map(p => p.neto)) : 0;
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Plate</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleCreate}
-        >
-          Dodaj platu
-        </Button>
-      </Box>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Typography 
+        variant="h3" 
+        component="h1" 
+        sx={{ 
+          mb: 4, 
+          textAlign: 'center',
+          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 'bold'
+        }}
+      >
+        💰 Plate Upravljanje
+      </Typography>
 
-      {/* Statistike */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Ukupne plate
-              </Typography>
-              <Typography variant="h5">
-                {ukupnePlate.toLocaleString()} RSD
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Prosečna plata
-              </Typography>
-              <Typography variant="h5">
-                {Math.round(prosecnaPlata).toLocaleString()} RSD
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Najviša plata
-              </Typography>
-              <Typography variant="h5">
-                {najvisaPlata.toLocaleString()} RSD
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Najniža plata
-              </Typography>
-              <Typography variant="h5">
-                {najnizaPlata.toLocaleString()} RSD
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <Paper 
+        elevation={3}
+        sx={{ 
+          borderRadius: 4,
+          overflow: 'hidden',
+          bgcolor: alpha(theme.palette.background.paper, 0.9),
+          backdropFilter: 'blur(20px)'
+        }}
+      >
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange} 
+            aria-label="plate tabs"
+            variant="fullWidth"
+            sx={{
+              '& .MuiTab-root': {
+                fontWeight: 'bold',
+                fontSize: '1rem',
+              }
+            }}
+          >
+            <Tab 
+              label="📋 Lista Plata" 
+              {...a11yProps(0)} 
+              icon={<span>📋</span>}
+              iconPosition="start"
+            />
+            <Tab 
+              label={editingPlata ? "✏️ Uredi Platu" : "➕ Dodaj Platu"} 
+              {...a11yProps(1)}
+              icon={editingPlata ? <span>✏️</span> : <span>➕</span>}
+              iconPosition="start"
+            />
+            <Tab 
+              label="📊 Statistike" 
+              {...a11yProps(2)}
+              icon={<span>📊</span>}
+              iconPosition="start"
+            />
+          </Tabs>
+        </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Zaposleni</TableCell>
-              <TableCell>Period</TableCell>
-              <TableCell align="right">Osnovna</TableCell>
-              <TableCell align="right">Bonusi</TableCell>
-              <TableCell align="right">Otkazi</TableCell>
-              <TableCell align="right">Neto</TableCell>
-              <TableCell>Datum kreiranja</TableCell>
-              <TableCell align="center">Akcije</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {plate?.map((plata) => (
-              <TableRow key={plata.id}>
-                <TableCell>
-                  {plata.zaposleni ? `${plata.zaposleni.ime} ${plata.zaposleni.prezime}` : 'Nepoznato'}
-                </TableCell>
-                <TableCell>{plata.period}</TableCell>
-                <TableCell align="right">{plata.osnovna.toLocaleString()}</TableCell>
-                <TableCell align="right">{plata.bonusi.toLocaleString()}</TableCell>
-                <TableCell align="right">{plata.otkazi.toLocaleString()}</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                  {plata.neto.toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  {new Date(plata.datumKreiranja).toLocaleDateString()}
-                </TableCell>
-                <TableCell align="center">
-                  <IconButton onClick={() => handleView(plata)} color="info">
-                    <ViewIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleEdit(plata)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(plata.id)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+        <TabPanel value={tabValue} index={0}>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Zaposleni</TableCell>
+                  <TableCell>Period</TableCell>
+                  <TableCell align="right">Osnovna</TableCell>
+                  <TableCell align="right">Bonusi</TableCell>
+                  <TableCell align="right">Otkazi</TableCell>
+                  <TableCell align="right">Neto</TableCell>
+                  <TableCell>Datum kreiranja</TableCell>
+                  <TableCell align="center">Akcije</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {plate?.map((plata) => (
+                  <TableRow key={plata.id}>
+                    <TableCell>
+                      {plata.zaposleni ? `${plata.zaposleni.ime} ${plata.zaposleni.prezime}` : 'Nepoznato'}
+                    </TableCell>
+                    <TableCell>{plata.period}</TableCell>
+                    <TableCell align="right">{plata.osnovna.toLocaleString()}</TableCell>
+                    <TableCell align="right">{plata.bonusi.toLocaleString()}</TableCell>
+                    <TableCell align="right">{plata.otkazi.toLocaleString()}</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                      {plata.neto.toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(plata.datumKreiranja).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={() => handleView(plata)} color="info">
+                        <ViewIcon />
+                      </IconButton>
+                      <IconButton onClick={() => handleEdit(plata)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => handleDelete(plata.id)} color="error">
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </TabPanel>
 
-      {/* Dialog za kreiranje/editovanje */}
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {editingPlata ? 'Edituj platu' : 'Dodaj novu platu'}
-        </DialogTitle>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogContent>
+        <TabPanel value={tabValue} index={1}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Controller
@@ -398,20 +442,75 @@ const Plate: React.FC = () => {
                   )}
                 />
               </Grid>
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                  fullWidth
+                  size="large"
+                >
+                  {editingPlata ? 'Sačuvaj' : 'Dodaj'}
+                </Button>
+              </Grid>
             </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpen(false)}>Otkaži</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              {editingPlata ? 'Sačuvaj' : 'Dodaj'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+          </form>
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={2}>
+          {/* Statistike */}
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography color="textSecondary" gutterBottom>
+                    Ukupne plate
+                  </Typography>
+                  <Typography variant="h5">
+                    {ukupnePlate.toLocaleString()} RSD
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography color="textSecondary" gutterBottom>
+                    Prosečna plata
+                  </Typography>
+                  <Typography variant="h5">
+                    {Math.round(prosecnaPlata).toLocaleString()} RSD
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography color="textSecondary" gutterBottom>
+                    Najviša plata
+                  </Typography>
+                  <Typography variant="h5">
+                    {najvisaPlata.toLocaleString()} RSD
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography color="textSecondary" gutterBottom>
+                    Najniža plata
+                  </Typography>
+                  <Typography variant="h5">
+                    {najnizaPlata.toLocaleString()} RSD
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
+      </Paper>
 
       {/* Dialog za pregled */}
       <Dialog open={!!viewingPlata} onClose={() => setViewingPlata(null)} maxWidth="sm" fullWidth>
@@ -457,7 +556,7 @@ const Plate: React.FC = () => {
           <Button onClick={() => setViewingPlata(null)}>Zatvori</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Container>
   );
 };
 

@@ -1,319 +1,379 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Paper,
-  Typography,
   Grid,
   Card,
   CardContent,
-  Alert,
+  Typography,
   CircularProgress,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
+  Alert,
+  Button,
+  Chip,
   LinearProgress,
-  useTheme
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import {
   Inventory as InventoryIcon,
-  MonetizationOn as MoneyIcon,
   Category as CategoryIcon,
-  LocationOn as LocationIcon,
-  TrendingUp as TrendingIcon,
-  Assessment as AssessmentIcon
+  Assessment as AssessmentIcon,
+  TrendingUp as TrendingUpIcon,
+  Warning as WarningIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend
-} from 'recharts';
-import inventarService, { InventarStatistike } from '../../services/inventarService';
+import { InventarService } from '../../services/inventarService';
+import { InventarStats } from '../../types/inventar';
 
-const InventarStatistikeKomponenta: React.FC = () => {
-  const [statistike, setStatistike] = useState<InventarStatistike | null>(null);
-  const [loading, setLoading] = useState(true);
+const InventarStatistike: React.FC = () => {
+  // 🔍 SAFE STATE INITIALIZATION
+  const [statistike, setStatistike] = useState<InventarStats | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const theme = useTheme();
-
-  useEffect(() => {
-    loadStatistike();
-  }, []);
 
   const loadStatistike = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      const data = await inventarService.getStatistike();
-      setStatistike(data);
-      setError(null);
-    } catch (err) {
-      setError('Greška pri učitavanju statistika');
-      console.error('Error loading statistics:', err);
+      console.log('📊 Učitavam statistike inventara...');
+      const data = await InventarService.getStatistike();
+      
+      console.log('🔍 Statistike response type:', typeof data);
+      console.log('🔍 Statistike response:', data);
+      
+      if (data && typeof data === 'object') {
+        console.log('✅ Statistike uspešno učitane');
+        setStatistike(data);
+      } else {
+        console.error('❌ Statistike su u neočekivanom formatu:', data);
+        setStatistike(null);
+        setError('Statistike su u neočekivanom formatu');
+      }
+    } catch (err: any) {
+      console.error('❌ Greška pri učitavanju statistika:', err);
+      setError(err.message || 'Neočekivana greška pri učitavanju statistika');
+      setStatistike(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return `${amount.toLocaleString('sr-RS')} RSD`;
+  useEffect(() => {
+    loadStatistike();
+  }, []);
+
+  // 🔍 SAFE HELPER FUNCTIONS sa default vrednostima
+  const getUkupnoStavki = (): number => {
+    return statistike?.ukupnoStavki ?? 0;
   };
 
-  const COLORS = {
-    primary: theme.palette.primary.main,
-    secondary: theme.palette.secondary.main,
-    success: theme.palette.success.main,
-    warning: theme.palette.warning.main,
-    error: theme.palette.error.main,
-    info: theme.palette.info.main
+  const getUkupnaVrednost = (): number => {
+    return statistike?.ukupnaVrednost ?? 0;
   };
 
-  const pieColors = [COLORS.primary, COLORS.secondary, COLORS.success, COLORS.warning, COLORS.error, COLORS.info];
+  const getKategorije = (): number => {
+    return statistike?.brojKategorija ?? 0;
+  };
 
-  // Pripremi podatke za grafike
-  const stanjeData = statistike ? Object.entries(statistike.stavkePoStanju).map(([stanje, broj], index) => ({
-    name: stanje,
-    value: broj,
-    color: pieColors[index % pieColors.length]
-  })) : [];
+  const getStatusDistribucija = (): Array<{label: string, value: number, color: string}> => {
+    if (!statistike?.statusDistribucija || typeof statistike.statusDistribucija !== 'object') {
+      return [
+        { label: 'Dostupno', value: 0, color: '#4caf50' },
+        { label: 'Izdato', value: 0, color: '#ff9800' },
+        { label: 'Pokvareno', value: 0, color: '#f44336' },
+        { label: 'Servis', value: 0, color: '#2196f3' },
+      ];
+    }
 
-  const kategorijaData = statistike ? Object.entries(statistike.stavkePoKategoriji).map(([kategorija, broj]) => ({
-    name: kategorija,
-    vrednost: broj
-  })) : [];
+    // 🔍 SAFE Object.entries sa fallback
+    const entries = Object.entries(statistike.statusDistribucija || {});
+    return entries.map(([status, count]) => ({
+      label: status || 'Nepoznato',
+      value: Number(count) || 0,
+      color: getStatusColor(status),
+    }));
+  };
 
-  const lokacijaData = statistike ? Object.entries(statistike.stavkePoLokaciji).map(([lokacija, broj]) => ({
-    name: lokacija,
-    vrednost: broj
-  })) : [];
+  const getKategorijeDistribucija = (): Array<{kategorija: string, brojStavki: number}> => {
+    if (!statistike?.kategorijeDistribucija || !Array.isArray(statistike.kategorijeDistribucija)) {
+      return [];
+    }
 
+    return statistike.kategorijeDistribucija.map((item: any) => ({
+      kategorija: item?.kategorija || 'Nepoznato',
+      brojStavki: Number(item?.brojStavki) || 0,
+    }));
+  };
+
+  const getStatusColor = (status: string): string => {
+    switch (status?.toLowerCase()) {
+      case 'dostupno':
+        return '#4caf50';
+      case 'izdato':
+        return '#ff9800';
+      case 'pokvareno':
+        return '#f44336';
+      case 'servis':
+        return '#2196f3';
+      default:
+        return '#9e9e9e';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'dostupno':
+        return <CheckCircleIcon />;
+      case 'izdato':
+        return <InfoIcon />;
+      case 'pokvareno':
+        return <ErrorIcon />;
+      case 'servis':
+        return <WarningIcon />;
+      default:
+        return <InfoIcon />;
+    }
+  };
+
+  // Loading state
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress size={60} />
+      <Box 
+        display="flex" 
+        flexDirection="column"
+        justifyContent="center" 
+        alignItems="center" 
+        minHeight="400px"
+        gap={2}
+      >
+        <CircularProgress size={48} />
+        <Typography variant="body1">
+          Učitavam statistike inventara...
+        </Typography>
       </Box>
     );
   }
 
-  if (error || !statistike) {
+  // Error state
+  if (error) {
     return (
-      <Alert severity="error" sx={{ mb: 2 }}>
-        {error || 'Statistike nisu dostupne'}
-      </Alert>
+      <Box sx={{ mb: 2 }}>
+        <Alert 
+          severity="error" 
+          action={
+            <Button color="inherit" size="small" onClick={loadStatistike}>
+              Pokušaj ponovo
+            </Button>
+          }
+        >
+          <Typography variant="body2">
+            <strong>Greška pri učitavanju statistika:</strong><br />
+            {error}
+          </Typography>
+        </Alert>
+      </Box>
+    );
+  }
+
+  // No data state
+  if (!statistike) {
+    return (
+      <Box textAlign="center" py={6}>
+        <AssessmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+        <Typography variant="h6" color="text.secondary" gutterBottom>
+          Nema dostupnih statistika
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={3}>
+          Možda još uvek nema podataka u inventaru
+        </Typography>
+        <Button variant="outlined" onClick={loadStatistike}>
+          Osvezi
+        </Button>
+      </Box>
     );
   }
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-        📊 Statistike Inventara
-      </Typography>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
-
-      {/* Ključni indikatori */}
+      {/* Osnovne statistike */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={3} sx={{ 
-            background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.secondary})`,
-            color: 'white'
-          }}>
+          <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                    {statistike.ukupanBrojStavki}
-                  </Typography>
-                  <Typography variant="body2">
+                  <Typography color="text.secondary" gutterBottom variant="body2">
                     Ukupno stavki
                   </Typography>
+                  <Typography variant="h4" component="div">
+                    {getUkupnoStavki().toLocaleString()}
+                  </Typography>
                 </Box>
-                <InventoryIcon sx={{ fontSize: 48, opacity: 0.8 }} />
+                <InventoryIcon sx={{ fontSize: 40, color: 'primary.main' }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={3} sx={{ 
-            background: `linear-gradient(135deg, ${COLORS.success}, ${COLORS.info})`,
-            color: 'white'
-          }}>
+          <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                    {formatCurrency(statistike.ukupnaVrednost)}
-                  </Typography>
-                  <Typography variant="body2">
+                  <Typography color="text.secondary" gutterBottom variant="body2">
                     Ukupna vrednost
                   </Typography>
+                  <Typography variant="h4" component="div">
+                    {getUkupnaVrednost().toLocaleString()} RSD
+                  </Typography>
                 </Box>
-                <MoneyIcon sx={{ fontSize: 48, opacity: 0.8 }} />
+                <TrendingUpIcon sx={{ fontSize: 40, color: 'success.main' }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={3} sx={{ 
-            background: `linear-gradient(135deg, ${COLORS.warning}, ${COLORS.error})`,
-            color: 'white'
-          }}>
+          <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                    {Object.keys(statistike.stavkePoKategoriji).length}
+                  <Typography color="text.secondary" gutterBottom variant="body2">
+                    Broj kategorija
                   </Typography>
-                  <Typography variant="body2">
-                    Kategorija
+                  <Typography variant="h4" component="div">
+                    {getKategorije()}
                   </Typography>
                 </Box>
-                <CategoryIcon sx={{ fontSize: 48, opacity: 0.8 }} />
+                <CategoryIcon sx={{ fontSize: 40, color: 'info.main' }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card elevation={3} sx={{ 
-            background: `linear-gradient(135deg, ${COLORS.info}, ${COLORS.primary})`,
-            color: 'white'
-          }}>
+          <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                    {Object.keys(statistike.stavkePoLokaciji).length}
+                  <Typography color="text.secondary" gutterBottom variant="body2">
+                    Aktivni status
                   </Typography>
-                  <Typography variant="body2">
-                    Lokacija
+                  <Typography variant="h4" component="div" color="success.main">
+                    Online
                   </Typography>
                 </Box>
-                <LocationIcon sx={{ fontSize: 48, opacity: 0.8 }} />
+                <AssessmentIcon sx={{ fontSize: 40, color: 'warning.main' }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      <Grid container spacing={3}>
-        {/* Distribucija po stanju */}
+      {/* Status distribucija */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={6}>
-          <Paper elevation={2} sx={{ p: 3, height: '400px' }}>
-            <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-              <AssessmentIcon sx={{ mr: 1 }} /> Distribucija po stanju
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={stanjeData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  label={({ name, value }) => `${name}: ${value}`}
-                >
-                  {stanjeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-
-        {/* Stavke po kategorijama */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={2} sx={{ p: 3, height: '400px' }}>
-            <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-              <CategoryIcon sx={{ mr: 1 }} /> Stavke po kategorijama
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={kategorijaData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="vrednost" fill={COLORS.primary} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-
-        {/* Stavke po lokacijama */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={2} sx={{ p: 3, height: '400px' }}>
-            <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-              <LocationIcon sx={{ mr: 1 }} /> Stavke po lokacijama
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={lokacijaData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="vrednost" fill={COLORS.secondary} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-
-        {/* Detaljni pregled */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={2} sx={{ p: 3, height: '400px' }}>
-            <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-              <TrendingIcon sx={{ mr: 1 }} /> Detaljni pregled
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            
-            <List>
-              {Object.entries(statistike.stavkePoStanju).map(([stanje, broj]) => {
-                const procenat = (broj / statistike.ukupanBrojStavki) * 100;
-                return (
-                  <ListItem key={stanje}>
-                    <Box sx={{ width: '100%' }}>
-                      <ListItemText
-                        primary={`${stanje}: ${broj} stavki`}
-                        secondary={`${procenat.toFixed(1)}% od ukupnog broja`}
-                      />
-                      <LinearProgress
-                        variant="determinate"
-                        value={procenat}
-                        sx={{ mt: 1, height: 8, borderRadius: 4 }}
-                      />
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Distribucija po statusu
+              </Typography>
+              {getStatusDistribucija().map((item, index) => (
+                <Box key={index} sx={{ mb: 2 }}>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      {getStatusIcon(item.label)}
+                      <Typography variant="body2">
+                        {item.label}
+                      </Typography>
                     </Box>
-                  </ListItem>
-                );
-              })}
-            </List>
-          </Paper>
+                    <Typography variant="body2" fontWeight="bold">
+                      {item.value}
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={getUkupnoStavki() > 0 ? (item.value / getUkupnoStavki()) * 100 : 0}
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: item.color,
+                      },
+                    }}
+                  />
+                </Box>
+              ))}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Kategorije
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Kategorija</TableCell>
+                      <TableCell align="right">Broj stavki</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {getKategorijeDistribucija().length > 0 ? (
+                      getKategorijeDistribucija().map((kategorija, index) => (
+                        <TableRow key={index}>
+                          <TableCell component="th" scope="row">
+                            {kategorija.kategorija}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Chip 
+                              label={kategorija.brojStavki} 
+                              size="small" 
+                              color="primary" 
+                              variant="outlined"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={2} align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            Nema kategorija
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
+
+      {/* Action buttons */}
+      <Box display="flex" gap={2} justifyContent="flex-end">
+        <Button variant="outlined" onClick={loadStatistike}>
+          Osvezi statistike
+        </Button>
+        <Button variant="contained" startIcon={<AssessmentIcon />}>
+          Izvezi izveštaj
+        </Button>
+      </Box>
     </Box>
   );
 };
 
-export default InventarStatistikeKomponenta;
+export default InventarStatistike;

@@ -30,10 +30,22 @@ export interface Pozicija {
   datumKreiranja: string;
 }
 
+export interface Odsek {
+  id: number;
+  naziv: string;
+  opis?: string;
+  lokacija?: string;
+  boja?: string;
+  budzetKod?: string;
+  isActive: boolean;
+  datumKreiranja: string;
+}
+
 export interface UpdateHijerarhijeRequest {
   zaposleniId: number;
   noviNadredjeniId?: number;
   novaPozicijaId?: number;
+  noviOdsekId?: number;
 }
 
 export interface ZaposleniHijerarhija {
@@ -41,6 +53,19 @@ export interface ZaposleniHijerarhija {
   nadredjeni?: OrgChartNode;
   podredjeni: OrgChartNode[];
 }
+
+// 🔐 Helper za dobijanje auth headera
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Nema JWT tokena - korisnik nije ulogovan');
+  }
+  
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  };
+};
 
 // 🏗️ STRUKTURA API SERVICE
 class StrukturaService {
@@ -51,7 +76,9 @@ class StrukturaService {
    */
   getOrganizationChart = async (): Promise<OrgChartNode[]> => {
     try {
-      const response = await axios.get(`${this.baseUrl}/org-chart`);
+      const response = await axios.get(`${this.baseUrl}/org-chart`, {
+        headers: getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       console.error('❌ Error fetching organization chart:', error);
@@ -64,7 +91,9 @@ class StrukturaService {
    */
   getPozicije = async (): Promise<Pozicija[]> => {
     try {
-      const response = await axios.get(`${this.baseUrl}/pozicije`);
+      const response = await axios.get(`${this.baseUrl}/pozicije`, {
+        headers: getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       console.error('❌ Error fetching positions:', error);
@@ -73,11 +102,28 @@ class StrukturaService {
   }
 
   /**
+   * 🏢 Dohvata sve dostupne odseke
+   */
+  getOdseci = async (): Promise<Odsek[]> => {
+    try {
+      const response = await axios.get(`${this.baseUrl}/odseci`, {
+        headers: getAuthHeaders(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error fetching departments:', error);
+      throw new Error('Greška pri učitavanju odseka');
+    }
+  }
+
+  /**
    * 👤 Dohvata hijerarhiju za određenog zaposlenog
    */
   getZaposleniHijerarhija = async (zaposleniId: number): Promise<ZaposleniHijerarhija> => {
     try {
-      const response = await axios.get(`${this.baseUrl}/zaposleni/${zaposleniId}/hijerarhija`);
+      const response = await axios.get(`${this.baseUrl}/zaposleni/${zaposleniId}/hijerarhija`, {
+        headers: getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       console.error(`❌ Error fetching hierarchy for employee ${zaposleniId}:`, error);
@@ -90,19 +136,25 @@ class StrukturaService {
    */
   updateHijerarhija = async (request: UpdateHijerarhijeRequest): Promise<void> => {
     try {
-      await axios.put(`${this.baseUrl}/update-hijerarhija`, request);
+      await axios.put(`${this.baseUrl}/update-hijerarhija`, request, {
+        headers: getAuthHeaders(),
+      });
     } catch (error) {
       console.error('❌ Error updating hierarchy:', error);
       throw new Error('Greška pri ažuriranju hijerarhije');
     }
   }
 
+  // 📋 POZICIJE CRUD OPERACIJE
+
   /**
    * ➕ Kreira novu poziciju
    */
   createPozicija = async (pozicija: Omit<Pozicija, 'id' | 'datumKreiranja' | 'isActive'>): Promise<Pozicija> => {
     try {
-      const response = await axios.post(`${this.baseUrl}/pozicije`, pozicija);
+      const response = await axios.post(`${this.baseUrl}/pozicije`, pozicija, {
+        headers: getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       console.error('❌ Error creating position:', error);
@@ -115,7 +167,9 @@ class StrukturaService {
    */
   updatePozicija = async (id: number, pozicija: Omit<Pozicija, 'id' | 'datumKreiranja' | 'isActive'>): Promise<Pozicija> => {
     try {
-      const response = await axios.put(`${this.baseUrl}/pozicije/${id}`, pozicija);
+      const response = await axios.put(`${this.baseUrl}/pozicije/${id}`, pozicija, {
+        headers: getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       console.error(`❌ Error updating position ${id}:`, error);
@@ -128,15 +182,65 @@ class StrukturaService {
    */
   deletePozicija = async (id: number): Promise<void> => {
     try {
-      await axios.delete(`${this.baseUrl}/pozicije/${id}`);
+      await axios.delete(`${this.baseUrl}/pozicije/${id}`, {
+        headers: getAuthHeaders(),
+      });
     } catch (error) {
       console.error(`❌ Error deleting position ${id}:`, error);
       throw new Error('Greška pri brisanju pozicije');
     }
   }
 
+  // 🏢 ODSECI CRUD OPERACIJE
+
   /**
-   * 🎨 Helper: Dobija default boju za poziciu na osnovu nivoa
+   * ➕ Kreira novi odsek
+   */
+  createOdsek = async (odsek: Omit<Odsek, 'id' | 'datumKreiranja' | 'isActive'>): Promise<Odsek> => {
+    try {
+      const response = await axios.post(`${this.baseUrl}/odseci`, odsek, {
+        headers: getAuthHeaders(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error creating department:', error);
+      throw new Error('Greška pri kreiranju odseka');
+    }
+  }
+
+  /**
+   * ✏️ Ažurira postojeći odsek
+   */
+  updateOdsek = async (id: number, odsek: Omit<Odsek, 'id' | 'datumKreiranja' | 'isActive'>): Promise<Odsek> => {
+    try {
+      const response = await axios.put(`${this.baseUrl}/odseci/${id}`, odsek, {
+        headers: getAuthHeaders(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Error updating department ${id}:`, error);
+      throw new Error('Greška pri ažuriranju odseka');
+    }
+  }
+
+  /**
+   * 🗑️ Briše odsek
+   */
+  deleteOdsek = async (id: number): Promise<void> => {
+    try {
+      await axios.delete(`${this.baseUrl}/odseci/${id}`, {
+        headers: getAuthHeaders(),
+      });
+    } catch (error) {
+      console.error(`❌ Error deleting department ${id}:`, error);
+      throw new Error('Greška pri brisanju odseka');
+    }
+  }
+
+  // 🎨 HELPER FUNKCIJE
+
+  /**
+   * 🎨 Helper: Dobija default boju za poziciju na osnovu nivoa
    */
   getDefaultColorForLevel = (nivo: number): string => {
     const levelColors: Record<number, string> = {
@@ -164,6 +268,23 @@ class StrukturaService {
     
     return levelLabels[nivo] || `Nivo ${nivo}`;
   }
+
+  /**
+   * 🎨 Helper: Dobija default boju za odseke
+   */
+  getDefaultColorForDepartment = (): string => {
+    const departmentColors = [
+      '#3498db', // Plava
+      '#e74c3c', // Crvena
+      '#2ecc71', // Zelena
+      '#f39c12', // Narandžasta
+      '#9b59b6', // Ljubičasta
+      '#1abc9c', // Tirkizna
+      '#34495e', // Tamno siva
+    ];
+    
+    return departmentColors[Math.floor(Math.random() * departmentColors.length)];
+  }
 }
 
 // Singleton instance
@@ -175,5 +296,6 @@ export const strukturaQueries = {
   all: ['struktura'] as const,
   orgChart: () => [...strukturaQueries.all, 'org-chart'] as const,
   pozicije: () => [...strukturaQueries.all, 'pozicije'] as const,
+  odseci: () => [...strukturaQueries.all, 'odseci'] as const,
   hijerarhija: (zaposleniId: number) => [...strukturaQueries.all, 'hijerarhija', zaposleniId] as const,
 };

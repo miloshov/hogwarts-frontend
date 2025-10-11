@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Box,
+  Container,
+  Typography,
   Paper,
+  Tab,
+  Tabs,
+  Box,
+  useTheme,
+  alpha,
   Table,
   TableBody,
   TableCell,
@@ -10,7 +16,6 @@ import {
   TableRow,
   Button,
   IconButton,
-  Typography,
   Chip,
   Dialog,
   DialogTitle,
@@ -35,6 +40,12 @@ import { zahtevZaOdmorService } from '../services/zahtevZaOdmorService';
 import { zaposleniService, ZaposleniDropdownItem } from '../services/zaposleniService';
 import { ZahtevZaOdmor, ZahtevZaOdmorDto } from '../types';
 import LoadingSpinner from '../components/LoadingSpinner';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
 
 // ✅ NOVO: Tip za GET response koji ima drugačiji format od ZahtevZaOdmor
 interface ZahtevZaOdmorListItem {
@@ -68,6 +79,33 @@ interface ApprovalDialogProps {
   onClose: () => void;
   onApprove: (id: number, napomena?: string) => void;
   onReject: (id: number, napomena?: string) => void;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`zahtevi-tabpanel-${index}`}
+      aria-labelledby={`zahtevi-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `zahtevi-tab-${index}`,
+    'aria-controls': `zahtevi-tabpanel-${index}`,
+  };
 }
 
 const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
@@ -172,10 +210,12 @@ const tipOdmoraOptions = [
 ];
 
 const ZahteviZaOdmor: React.FC = () => {
+  const [tabValue, setTabValue] = useState(0);
   const [open, setOpen] = useState(false);
   const [viewingZahtev, setViewingZahtev] = useState<ZahtevZaOdmorListItem | null>(null);  // ✅ ISPRAVKA
   const [approvalDialog, setApprovalDialog] = useState(false);
   const [selectedZahtev, setSelectedZahtev] = useState<ZahtevZaOdmorListItem | null>(null);  // ✅ ISPRAVKA
+  const theme = useTheme();
   const queryClient = useQueryClient();
 
   const { control, handleSubmit, reset, watch, formState: { errors } } = useForm<ZahtevFormData>();
@@ -197,6 +237,7 @@ const ZahteviZaOdmor: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['zahteviZaOdmor'] });
       setOpen(false);
       reset();
+      setTabValue(0); // Vrati na listu
     },
   });
 
@@ -223,6 +264,10 @@ const ZahteviZaOdmor: React.FC = () => {
     },
   });
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
   const handleCreate = () => {
     reset({
       zaposleniId: 0,
@@ -232,6 +277,7 @@ const ZahteviZaOdmor: React.FC = () => {
       tipOdmora: 'Godisnji',
     });
     setOpen(true);
+    setTabValue(1); // Prebaci na formu
   };
 
   const handleView = (zahtev: ZahtevZaOdmorListItem) => {  // ✅ ISPRAVKA
@@ -306,127 +352,122 @@ const ZahteviZaOdmor: React.FC = () => {
     Math.ceil((new Date(datumDo).getTime() - new Date(datumOd).getTime()) / (1000 * 60 * 60 * 24)) + 1 : 0;
 
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Zahtevi za odmor</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleCreate}
-        >
-          Novi zahtev
-        </Button>
-      </Box>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Typography 
+        variant="h3" 
+        component="h1" 
+        sx={{ 
+          mb: 4, 
+          textAlign: 'center',
+          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 'bold'
+        }}
+      >
+        🏖️ Zahtevi za Odmor Upravljanje
+      </Typography>
 
-      {/* Statistike */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Na čekanju
-              </Typography>
-              <Typography variant="h4" color="warning.main">
-                {zahteviNaCekanju.length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Odobreni
-              </Typography>
-              <Typography variant="h4" color="success.main">
-                {odobreniZahtevi.length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Odbijeni
-              </Typography>
-              <Typography variant="h4" color="error.main">
-                {odbijeniZahtevi.length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Ukupno
-              </Typography>
-              <Typography variant="h4">
-                {zahteviZaOdmor?.length || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <Paper 
+        elevation={3}
+        sx={{ 
+          borderRadius: 4,
+          overflow: 'hidden',
+          bgcolor: alpha(theme.palette.background.paper, 0.9),
+          backdropFilter: 'blur(20px)'
+        }}
+      >
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange} 
+            aria-label="zahtevi tabs"
+            variant="fullWidth"
+            sx={{
+              '& .MuiTab-root': {
+                fontWeight: 'bold',
+                fontSize: '1rem',
+              }
+            }}
+          >
+            <Tab 
+              label="📋 Lista Zahteva" 
+              {...a11yProps(0)} 
+              icon={<span>📋</span>}
+              iconPosition="start"
+            />
+            <Tab 
+              label="➕ Novi Zahtev" 
+              {...a11yProps(1)}
+              icon={<span>➕</span>}
+              iconPosition="start"
+            />
+            <Tab 
+              label="📊 Statistike" 
+              {...a11yProps(2)}
+              icon={<span>📊</span>}
+              iconPosition="start"
+            />
+          </Tabs>
+        </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Zaposleni</TableCell>
-              <TableCell>Tip odmora</TableCell>
-              <TableCell>Period</TableCell>
-              <TableCell align="center">Broj dana</TableCell>
-              <TableCell>Datum zahteva</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="center">Akcije</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {zahteviZaOdmor?.map((zahtev) => (
-              <TableRow key={zahtev.id}>
-                <TableCell>
-                  {/* ✅ ISPRAVKA: Koristi ZaposleniIme iz GET response-a */}
-                  {zahtev.zaposleniIme || 'Nepoznato'}
-                </TableCell>
-                <TableCell>{zahtev.tipOdmora}</TableCell>
-                <TableCell>
-                  {new Date(zahtev.datumOd).toLocaleDateString()} - {new Date(zahtev.datumDo).toLocaleDateString()}
-                </TableCell>
-                <TableCell align="center">{zahtev.brojDana}</TableCell>
-                <TableCell>{new Date(zahtev.datumZahteva).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={getStatusText(zahtev.status)}
-                    color={getStatusColor(zahtev.status) as any}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <IconButton onClick={() => handleView(zahtev)} color="info">
-                    <ViewIcon />
-                  </IconButton>
-                  {zahtev.status === 'NaCekanju' && (  /* ✅ ISPRAVKA */
-                    <IconButton onClick={() => handleApproval(zahtev)} color="primary">
-                      <CheckIcon />
-                    </IconButton>
-                  )}
-                  <IconButton onClick={() => handleDelete(zahtev.id)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+        <TabPanel value={tabValue} index={0}>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Zaposleni</TableCell>
+                  <TableCell>Tip odmora</TableCell>
+                  <TableCell>Period</TableCell>
+                  <TableCell align="center">Broj dana</TableCell>
+                  <TableCell>Datum zahteva</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="center">Akcije</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {zahteviZaOdmor?.map((zahtev) => (
+                  <TableRow key={zahtev.id}>
+                    <TableCell>
+                      {/* ✅ ISPRAVKA: Koristi ZaposleniIme iz GET response-a */}
+                      {zahtev.zaposleniIme || 'Nepoznato'}
+                    </TableCell>
+                    <TableCell>{zahtev.tipOdmora}</TableCell>
+                    <TableCell>
+                      {new Date(zahtev.datumOd).toLocaleDateString()} - {new Date(zahtev.datumDo).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell align="center">{zahtev.brojDana}</TableCell>
+                    <TableCell>{new Date(zahtev.datumZahteva).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={getStatusText(zahtev.status)}
+                        color={getStatusColor(zahtev.status) as any}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={() => handleView(zahtev)} color="info">
+                        <ViewIcon />
+                      </IconButton>
+                      {zahtev.status === 'NaCekanju' && (  /* ✅ ISPRAVKA */
+                        <IconButton onClick={() => handleApproval(zahtev)} color="primary">
+                          <CheckIcon />
+                        </IconButton>
+                      )}
+                      <IconButton onClick={() => handleDelete(zahtev.id)} color="error">
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </TabPanel>
 
-      {/* Dialog za kreiranje */}
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Novi zahtev za odmor</DialogTitle>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogContent>
+        <TabPanel value={tabValue} index={1}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Controller
@@ -549,20 +590,75 @@ const ZahteviZaOdmor: React.FC = () => {
                   )}
                 />
               </Grid>
+              <Grid item xs={12}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={createMutation.isPending}
+                  fullWidth
+                  size="large"
+                >
+                  Pošalji zahtev
+                </Button>
+              </Grid>
             </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpen(false)}>Otkaži</Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={createMutation.isPending}
-            >
-              Posladži zahtev
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+          </form>
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={2}>
+          {/* Statistike */}
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography color="textSecondary" gutterBottom>
+                    Na čekanju
+                  </Typography>
+                  <Typography variant="h4" color="warning.main">
+                    {zahteviNaCekanju.length}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography color="textSecondary" gutterBottom>
+                    Odobreni
+                  </Typography>
+                  <Typography variant="h4" color="success.main">
+                    {odobreniZahtevi.length}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography color="textSecondary" gutterBottom>
+                    Odbijeni
+                  </Typography>
+                  <Typography variant="h4" color="error.main">
+                    {odbijeniZahtevi.length}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Typography color="textSecondary" gutterBottom>
+                    Ukupno
+                  </Typography>
+                  <Typography variant="h4">
+                    {zahteviZaOdmor?.length || 0}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
+      </Paper>
 
       {/* Dialog za pregled */}
       <Dialog open={!!viewingZahtev} onClose={() => setViewingZahtev(null)} maxWidth="sm" fullWidth>
@@ -609,19 +705,6 @@ const ZahteviZaOdmor: React.FC = () => {
                   </Typography>
                 </Grid>
               )}
-              {viewingZahtev.napomenaOdgovora && (
-                <Grid item xs={12}>
-                  <Typography><strong>Napomena odgovora:</strong></Typography>
-                  <Typography variant="body2" sx={{ mt: 1, p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
-                    {viewingZahtev.napomenaOdgovora}
-                  </Typography>
-                </Grid>
-              )}
-              {viewingZahtev.datumOdgovora && (
-                <Grid item xs={12}>
-                  <Typography><strong>Datum odgovora:</strong> {new Date(viewingZahtev.datumOdgovora).toLocaleDateString()}</Typography>
-                </Grid>
-              )}
             </Grid>
           )}
         </DialogContent>
@@ -630,6 +713,7 @@ const ZahteviZaOdmor: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Approval Dialog */}
       <ApprovalDialog
         open={approvalDialog}
         zahtev={selectedZahtev}
@@ -637,7 +721,7 @@ const ZahteviZaOdmor: React.FC = () => {
         onApprove={handleApprove}
         onReject={handleReject}
       />
-    </Box>
+    </Container>
   );
 };
 

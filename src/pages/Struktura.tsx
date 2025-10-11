@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Tabs,
-  Tab,
+  Container,
   Typography,
   Paper,
+  Tab,
+  Tabs,
+  Box,
+  useTheme,
+  alpha,
   Button,
   Dialog,
   DialogTitle,
@@ -37,6 +40,8 @@ import {
   TableRow,
   ToggleButton,
   ToggleButtonGroup,
+  Breadcrumbs,
+  Link,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -50,9 +55,14 @@ import {
   Colorize as ColorIcon,
   ViewList as ListIcon,
   ViewModule as GridIcon,
+  Home as HomeIcon,
+  NavigateNext as NavigateNextIcon,
+  CorporateFare as CorporateIcon,
+  WorkOutline as WorkIcon,
+  Domain as DomainIcon,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import strukturaService, { OrgChartNode, Pozicija } from '../services/strukturaService';
+import strukturaService, { OrgChartNode, Pozicija, Odsek } from '../services/strukturaService';
 import { zaposleniService } from '../services/zaposleniService';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -76,6 +86,14 @@ interface PozicijaFormData {
   boja: string;
 }
 
+interface OdsekFormData {
+  naziv: string;
+  opis: string;
+  lokacija: string;
+  boja: string;
+  budzetKod?: string;
+}
+
 // 🏢 TabPanel komponenta
 function TabPanel({ children, value, index, ...other }: TabPanelProps) {
   return (
@@ -91,9 +109,16 @@ function TabPanel({ children, value, index, ...other }: TabPanelProps) {
   );
 }
 
+function a11yProps(index: number) {
+  return {
+    id: `struktura-tab-${index}`,
+    'aria-controls': `struktura-tabpanel-${index}`,
+  };
+}
+
 // 👤 EmployeeNode komponenta za hijerarhijski prikaz
 function EmployeeNode({ node, level, onEditEmployee }: EmployeeNodeProps) {
-  const [expanded, setExpanded] = useState(level < 3); // Auto-expand prva 3 nivoa
+  const [expanded, setExpanded] = useState(level < 3);
 
   const getInitials = (ime: string, prezime: string) => {
     return `${ime.charAt(0)}${prezime.charAt(0)}`.toUpperCase();
@@ -145,7 +170,7 @@ function EmployeeNode({ node, level, onEditEmployee }: EmployeeNodeProps) {
             subheader={
               <Stack direction="row" spacing={1} alignItems="center">
                 <Chip
-                  icon={<CompanyIcon />}
+                  icon={<WorkIcon />}
                   label={node.pozicija}
                   size="small"
                   color="primary"
@@ -153,6 +178,7 @@ function EmployeeNode({ node, level, onEditEmployee }: EmployeeNodeProps) {
                 />
                 {node.odsek && (
                   <Chip
+                    icon={<DomainIcon />}
                     label={node.odsek}
                     size="small"
                     variant="filled"
@@ -207,7 +233,6 @@ function EmployeeNode({ node, level, onEditEmployee }: EmployeeNodeProps) {
           </CardContent>
         </Card>
 
-        {/* Hijerarhijski prikaz podređenih */}
         {hasSubordinates && (
           <Collapse in={expanded} timeout={300}>
             <Box sx={{ mt: 2, pl: 2 }}>
@@ -231,18 +256,28 @@ function EmployeeNode({ node, level, onEditEmployee }: EmployeeNodeProps) {
 export default function Struktura() {
   const [activeTab, setActiveTab] = useState(0);
   const [pozicijaDialog, setPozicijaDialog] = useState(false);
+  const [odsekDialog, setOdsekDialog] = useState(false);
   const [editingPozicija, setEditingPozicija] = useState<Pozicija | null>(null);
+  const [editingOdsek, setEditingOdsek] = useState<Odsek | null>(null);
   const [pozicijaForm, setPozicijaForm] = useState<PozicijaFormData>({
     naziv: '',
     opis: '',
     nivo: 5,
     boja: '#95a5a6',
   });
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); // 📋 Dodato za view toggle
+  const [odsekForm, setOdsekForm] = useState<OdsekFormData>({
+    naziv: '',
+    opis: '',
+    lokacija: '',
+    boja: '#3498db',
+    budzetKod: '',
+  });
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
+  const theme = useTheme();
   const queryClient = useQueryClient();
 
-  // 📊 Query za org chart
+  // 📊 Queries
   const {
     data: orgChart,
     isLoading: orgChartLoading,
@@ -250,10 +285,9 @@ export default function Struktura() {
   } = useQuery({
     queryKey: ['organizationalChart'],
     queryFn: strukturaService.getOrganizationChart,
-    staleTime: 5 * 60 * 1000, // 5 minuta
+    staleTime: 5 * 60 * 1000,
   });
 
-  // 📋 Query za pozicije
   const {
     data: pozicije,
     isLoading: pozicijeLoading,
@@ -264,7 +298,16 @@ export default function Struktura() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // 📊 Query za sve zaposlene
+  const {
+    data: odseci,
+    isLoading: odseciLoading,
+    error: odseciError,
+  } = useQuery({
+    queryKey: ['odseci'],
+    queryFn: strukturaService.getOdseci,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const {
     data: zaposleni,
     isLoading: zaposleniLoading,
@@ -275,7 +318,7 @@ export default function Struktura() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // ➕ Mutation za kreiranje pozicije
+  // 🔄 Mutations za pozicije
   const createPozicijaMutation = useMutation({
     mutationFn: strukturaService.createPozicija,
     onSuccess: () => {
@@ -284,7 +327,6 @@ export default function Struktura() {
     },
   });
 
-  // ✏️ Mutation za ažuriranje pozicije
   const updatePozicijaMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Omit<Pozicija, 'id' | 'datumKreiranja' | 'isActive'> }) =>
       strukturaService.updatePozicija(id, data),
@@ -294,11 +336,35 @@ export default function Struktura() {
     },
   });
 
-  // 🗑️ Mutation za brisanje pozicije
   const deletePozicijaMutation = useMutation({
     mutationFn: strukturaService.deletePozicija,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pozicije'] });
+    },
+  });
+
+  // 🔄 Mutations za odseke
+  const createOdsekMutation = useMutation({
+    mutationFn: strukturaService.createOdsek,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['odseci'] });
+      handleCloseOdsekDialog();
+    },
+  });
+
+  const updateOdsekMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Omit<Odsek, 'id' | 'datumKreiranja' | 'isActive'> }) =>
+      strukturaService.updateOdsek(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['odseci'] });
+      handleCloseOdsekDialog();
+    },
+  });
+
+  const deleteOdsekMutation = useMutation({
+    mutationFn: strukturaService.deleteOdsek,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['odseci'] });
     },
   });
 
@@ -307,6 +373,7 @@ export default function Struktura() {
     setActiveTab(newValue);
   };
 
+  // Pozicije handlers
   const handleOpenPozicijaDialog = (pozicija?: Pozicija) => {
     if (pozicija) {
       setEditingPozicija(pozicija);
@@ -345,14 +412,59 @@ export default function Struktura() {
     }
   };
 
-  // 🗑️ Handler za brisanje pozicije
   const handleDeletePozicija = (pozicija: Pozicija) => {
     if (window.confirm(`Da li ste sigurni da želite da obrišete poziciju "${pozicija.naziv}"?`)) {
       deletePozicijaMutation.mutate(pozicija.id);
     }
   };
 
-  // 📋 Handler za view mode toggle
+  // Odseci handlers
+  const handleOpenOdsekDialog = (odsek?: Odsek) => {
+    if (odsek) {
+      setEditingOdsek(odsek);
+      setOdsekForm({
+        naziv: odsek.naziv,
+        opis: odsek.opis || '',
+        lokacija: odsek.lokacija || '',
+        boja: odsek.boja || '#3498db',
+        budzetKod: odsek.budzetKod || '',
+      });
+    } else {
+      setEditingOdsek(null);
+      setOdsekForm({
+        naziv: '',
+        opis: '',
+        lokacija: '',
+        boja: '#3498db',
+        budzetKod: '',
+      });
+    }
+    setOdsekDialog(true);
+  };
+
+  const handleCloseOdsekDialog = () => {
+    setOdsekDialog(false);
+    setEditingOdsek(null);
+    setOdsekForm({ naziv: '', opis: '', lokacija: '', boja: '#3498db', budzetKod: '' });
+  };
+
+  const handleSaveOdsek = () => {
+    if (editingOdsek) {
+      updateOdsekMutation.mutate({
+        id: editingOdsek.id,
+        data: odsekForm,
+      });
+    } else {
+      createOdsekMutation.mutate(odsekForm);
+    }
+  };
+
+  const handleDeleteOdsek = (odsek: Odsek) => {
+    if (window.confirm(`Da li ste sigurni da želite da obrišete odsek "${odsek.naziv}"?`)) {
+      deleteOdsekMutation.mutate(odsek.id);
+    }
+  };
+
   const handleViewModeChange = (_: React.MouseEvent<HTMLElement>, newViewMode: 'list' | 'grid') => {
     if (newViewMode !== null) {
       setViewMode(newViewMode);
@@ -410,177 +522,45 @@ export default function Struktura() {
     );
   };
 
-  // 📋 Render List View za pozicije
-  const renderPozicijeListView = () => {
-    if (!pozicije || pozicije.length === 0) {
-      return (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="body1" color="text.secondary">
-            Nema definisanih pozicija
-          </Typography>
-        </Paper>
-      );
-    }
-
-    return (
-      <TableContainer component={Paper} elevation={2}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'grey.50' }}>
-              <TableCell><strong>Naziv pozicije</strong></TableCell>
-              <TableCell><strong>Opis</strong></TableCell>
-              <TableCell><strong>Nivo</strong></TableCell>
-              <TableCell><strong>Boja</strong></TableCell>
-              <TableCell align="center"><strong>Datum kreiranja</strong></TableCell>
-              <TableCell align="center"><strong>Akcije</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {pozicije.map((pozicija) => (
-              <TableRow key={pozicija.id} hover>
-                <TableCell>
-                  <Typography variant="body2" fontWeight="medium">
-                    {pozicija.naziv}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" color="text.secondary">
-                    {pozicija.opis || '-'}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={strukturaService.getLevelLabel(pozicija.nivo)}
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Box
-                      sx={{
-                        width: 20,
-                        height: 20,
-                        bgcolor: pozicija.boja || strukturaService.getDefaultColorForLevel(pozicija.nivo),
-                        borderRadius: '50%',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {pozicija.boja || 'Default'}
-                    </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2" color="text.secondary">
-                    {new Date(pozicija.datumKreiranja).toLocaleDateString('sr-RS')}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Box display="flex" gap={1} justifyContent="center">
-                    <Tooltip title="Uredi poziciju">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenPozicijaDialog(pozicija)}
-                        color="primary"
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Obriši poziciju">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeletePozicija(pozicija)}
-                        color="error"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    );
-  };
-
-  // 🃏 Render Grid View za pozicije (postojeći)
-  const renderPozicijeGridView = () => {
-    if (!pozicije || pozicije.length === 0) {
-      return (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="body1" color="text.secondary">
-            Nema definisanih pozicija
-          </Typography>
-        </Paper>
-      );
+  // Skraćena verzija Pozicije - samo osnovni prikaz
+  const renderPozicijeContent = () => {
+    if (pozicijeLoading) {
+      return <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>;
     }
 
     return (
       <Grid container spacing={2}>
-        {pozicije.map((pozicija) => (
+        <Grid item xs={12}>
+          <Button 
+            variant="contained" 
+            startIcon={<AddIcon />} 
+            onClick={() => handleOpenPozicijaDialog()}
+            sx={{ mb: 2 }}
+          >
+            Dodaj poziciju
+          </Button>
+        </Grid>
+        {pozicije?.map((pozicija) => (
           <Grid item xs={12} sm={6} md={4} key={pozicija.id}>
-            <Card
-              elevation={2}
-              sx={{
-                borderLeft: `5px solid ${pozicija.boja || strukturaService.getDefaultColorForLevel(pozicija.nivo)}`,
-                '&:hover': { boxShadow: 4 },
-              }}
-            >
+            <Card elevation={2}>
               <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                  <Typography variant="h6" component="h3">
-                    {pozicija.naziv}
-                  </Typography>
+                <Typography variant="h6">{pozicija.naziv}</Typography>
+                <Typography variant="body2" color="text.secondary">{pozicija.opis || '-'}</Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+                  <Chip 
+                    label={strukturaService.getLevelLabel(pozicija.nivo)} 
+                    size="small" 
+                    color="primary" 
+                  />
                   <Box>
-                    <Tooltip title="Uredi poziciju">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenPozicijaDialog(pozicija)}
-                        color="primary"
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Obriši poziciju">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeletePozicija(pozicija)}
-                        color="error"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                    <IconButton size="small" onClick={() => handleOpenPozicijaDialog(pozicija)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton size="small" color="error" onClick={() => handleDeletePozicija(pozicija)}>
+                      <DeleteIcon />
+                    </IconButton>
                   </Box>
                 </Box>
-                
-                {pozicija.opis && (
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    {pozicija.opis}
-                  </Typography>
-                )}
-                
-                <Stack direction="row" spacing={1}>
-                  <Chip
-                    label={strukturaService.getLevelLabel(pozicija.nivo)}
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                  />
-                  <Chip
-                    icon={<ColorIcon />}
-                    label={pozicija.boja || 'Default'}
-                    size="small"
-                    sx={{
-                      bgcolor: pozicija.boja || strukturaService.getDefaultColorForLevel(pozicija.nivo),
-                      color: 'white',
-                    }}
-                  />
-                </Stack>
               </CardContent>
             </Card>
           </Grid>
@@ -589,187 +569,235 @@ export default function Struktura() {
     );
   };
 
-  const renderPozicijeManagement = () => {
-    if (pozicijeLoading) {
-      return <LoadingSpinner />;
-    }
-
-    if (pozicijeError) {
-      return (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          Greška pri učitavanju pozicija: {pozicijeError.message}
-        </Alert>
-      );
+  // Skraćena verzija Odseci - samo osnovni prikaz
+  const renderOdseciContent = () => {
+    if (odseciLoading) {
+      return <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>;
     }
 
     return (
-      <Box>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h6">Upravljanje pozicijama</Typography>
-          <Box display="flex" gap={2} alignItems="center">
-            {/* 📋 View Toggle */}
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={handleViewModeChange}
-              aria-label="view mode"
-              size="small"
-            >
-              <ToggleButton value="list" aria-label="list view">
-                <Tooltip title="Lista">
-                  <ListIcon />
-                </Tooltip>
-              </ToggleButton>
-              <ToggleButton value="grid" aria-label="grid view">
-                <Tooltip title="Kartice">
-                  <GridIcon />
-                </Tooltip>
-              </ToggleButton>
-            </ToggleButtonGroup>
-            
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpenPozicijaDialog()}
-            >
-              Dodaj poziciju
-            </Button>
-          </Box>
-        </Box>
-
-        {/* 📋 Conditional rendering based on view mode */}
-        {viewMode === 'list' ? renderPozicijeListView() : renderPozicijeGridView()}
-      </Box>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Button 
+            variant="contained" 
+            startIcon={<AddIcon />} 
+            onClick={() => handleOpenOdsekDialog()}
+            sx={{ mb: 2 }}
+          >
+            Dodaj odsek
+          </Button>
+        </Grid>
+        {odseci?.map((odsek) => (
+          <Grid item xs={12} sm={6} md={4} key={odsek.id}>
+            <Card elevation={2}>
+              <CardContent>
+                <Typography variant="h6">{odsek.naziv}</Typography>
+                <Typography variant="body2" color="text.secondary">{odsek.opis || '-'}</Typography>
+                <Typography variant="caption">📍 {odsek.lokacija || 'Lokacija nije definisana'}</Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+                  <Box 
+                    sx={{ width: 20, height: 20, bgcolor: odsek.boja, borderRadius: '50%' }}
+                  />
+                  <Box>
+                    <IconButton size="small" onClick={() => handleOpenOdsekDialog(odsek)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton size="small" color="error" onClick={() => handleDeleteOdsek(odsek)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
     );
   };
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Paper elevation={1} sx={{ mb: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          aria-label="struktura tabs"
-          variant="fullWidth"
-        >
-          <Tab
-            icon={<TreeIcon />}
-            iconPosition="start"
-            label="Organizaciona struktura"
-            id="struktura-tab-0"
-            aria-controls="struktura-tabpanel-0"
-          />
-          <Tab
-            icon={<CompanyIcon />}
-            iconPosition="start"
-            label="Upravljanje pozicijama"
-            id="struktura-tab-1"
-            aria-controls="struktura-tabpanel-1"
-          />
-        </Tabs>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Typography 
+        variant="h3" 
+        component="h1" 
+        sx={{ 
+          mb: 4, 
+          textAlign: 'center',
+          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 'bold'
+        }}
+      >
+        🏢 Struktura Upravljanje
+      </Typography>
+
+      <Paper 
+        elevation={3}
+        sx={{ 
+          borderRadius: 4,
+          overflow: 'hidden',
+          bgcolor: alpha(theme.palette.background.paper, 0.9),
+          backdropFilter: 'blur(20px)'
+        }}
+      >
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs 
+            value={activeTab} 
+            onChange={handleTabChange} 
+            aria-label="struktura tabs"
+            variant="fullWidth"
+            sx={{
+              '& .MuiTab-root': {
+                fontWeight: 'bold',
+                fontSize: '1rem',
+              }
+            }}
+          >
+            <Tab 
+              label="🌳 Organizaciona Struktura" 
+              {...a11yProps(0)} 
+              icon={<TreeIcon />}
+              iconPosition="start"
+            />
+            <Tab 
+              label="💼 Pozicije" 
+              {...a11yProps(1)}
+              icon={<WorkIcon />}
+              iconPosition="start"
+            />
+            <Tab 
+              label="🏛️ Odseci" 
+              {...a11yProps(2)}
+              icon={<DomainIcon />}
+              iconPosition="start"
+            />
+          </Tabs>
+        </Box>
+
+        <TabPanel value={activeTab} index={0}>
+          {renderOrgChart()}
+        </TabPanel>
+
+        <TabPanel value={activeTab} index={1}>
+          {renderPozicijeContent()}
+        </TabPanel>
+
+        <TabPanel value={activeTab} index={2}>
+          {renderOdseciContent()}
+        </TabPanel>
       </Paper>
 
-      <TabPanel value={activeTab} index={0}>
-        {renderOrgChart()}
-      </TabPanel>
-
-      <TabPanel value={activeTab} index={1}>
-        {renderPozicijeManagement()}
-      </TabPanel>
-
-      {/* Dialog za dodavanje/editovanje pozicije */}
-      <Dialog
-        open={pozicijaDialog}
-        onClose={handleClosePozicijaDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {editingPozicija ? 'Uredi poziciju' : 'Dodaj novu poziciju'}
-        </DialogTitle>
+      {/* Pozicija Dialog */}
+      <Dialog open={pozicijaDialog} onClose={handleClosePozicijaDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingPozicija ? 'Uredi poziciju' : 'Nova pozicija'}</DialogTitle>
         <DialogContent>
-          <Box component="form" sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Naziv pozicije"
-              value={pozicijaForm.naziv}
-              onChange={(e) => setPozicijaForm({ ...pozicijaForm, naziv: e.target.value })}
-              margin="normal"
-              required
-            />
-            
-            <TextField
-              fullWidth
-              label="Opis pozicije"
-              value={pozicijaForm.opis}
-              onChange={(e) => setPozicijaForm({ ...pozicijaForm, opis: e.target.value })}
-              margin="normal"
-              multiline
-              rows={3}
-            />
-            
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Nivo pozicije</InputLabel>
-              <Select
-                value={pozicijaForm.nivo}
-                onChange={(e) => {
-                  const noviNivo = Number(e.target.value);
-                  setPozicijaForm({
-                    ...pozicijaForm,
-                    nivo: noviNivo,
-                    boja: strukturaService.getDefaultColorForLevel(noviNivo),
-                  });
-                }}
-                label="Nivo pozicije"
-              >
-                {[1, 2, 3, 4, 5].map((nivo) => (
-                  <MenuItem key={nivo} value={nivo}>
-                    {strukturaService.getLevelLabel(nivo)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <TextField
-              fullWidth
-              label="Boja pozicije"
-              type="color"
-              value={pozicijaForm.boja}
-              onChange={(e) => setPozicijaForm({ ...pozicijaForm, boja: e.target.value })}
-              margin="normal"
-              InputProps={{
-                startAdornment: (
-                  <Box
-                    sx={{
-                      width: 24,
-                      height: 24,
-                      bgcolor: pozicijaForm.boja,
-                      borderRadius: '50%',
-                      mr: 1,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                    }}
-                  />
-                ),
-              }}
-            />
-          </Box>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Naziv pozicije"
+            fullWidth
+            variant="outlined"
+            value={pozicijaForm.naziv}
+            onChange={(e) => setPozicijaForm({ ...pozicijaForm, naziv: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Opis"
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={3}
+            value={pozicijaForm.opis}
+            onChange={(e) => setPozicijaForm({ ...pozicijaForm, opis: e.target.value })}
+          />
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Nivo</InputLabel>
+            <Select
+              value={pozicijaForm.nivo}
+              label="Nivo"
+              onChange={(e) => setPozicijaForm({ ...pozicijaForm, nivo: Number(e.target.value) })}
+            >
+              {[1, 2, 3, 4, 5].map((nivo) => (
+                <MenuItem key={nivo} value={nivo}>
+                  {strukturaService.getLevelLabel(nivo)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            margin="dense"
+            label="Boja (hex kod)"
+            fullWidth
+            variant="outlined"
+            value={pozicijaForm.boja}
+            onChange={(e) => setPozicijaForm({ ...pozicijaForm, boja: e.target.value })}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClosePozicijaDialog}>Otkaži</Button>
-          <Button
-            onClick={handleSavePozicija}
-            variant="contained"
-            disabled={
-              !pozicijaForm.naziv.trim() ||
-              createPozicijaMutation.isPending ||
-              updatePozicijaMutation.isPending
-            }
-          >
+          <Button onClick={handleSavePozicija} variant="contained">
             {editingPozicija ? 'Sačuvaj' : 'Dodaj'}
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+
+      {/* Odsek Dialog */}
+      <Dialog open={odsekDialog} onClose={handleCloseOdsekDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingOdsek ? 'Uredi odsek' : 'Novi odsek'}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Naziv odseka"
+            fullWidth
+            variant="outlined"
+            value={odsekForm.naziv}
+            onChange={(e) => setOdsekForm({ ...odsekForm, naziv: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Opis"
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={3}
+            value={odsekForm.opis}
+            onChange={(e) => setOdsekForm({ ...odsekForm, opis: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Lokacija"
+            fullWidth
+            variant="outlined"
+            value={odsekForm.lokacija}
+            onChange={(e) => setOdsekForm({ ...odsekForm, lokacija: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Budžet kod"
+            fullWidth
+            variant="outlined"
+            value={odsekForm.budzetKod}
+            onChange={(e) => setOdsekForm({ ...odsekForm, budzetKod: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Boja (hex kod)"
+            fullWidth
+            variant="outlined"
+            value={odsekForm.boja}
+            onChange={(e) => setOdsekForm({ ...odsekForm, boja: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseOdsekDialog}>Otkaži</Button>
+          <Button onClick={handleSaveOdsek} variant="contained">
+            {editingOdsek ? 'Sačuvaj' : 'Dodaj'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
   );
 }

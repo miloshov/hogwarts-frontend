@@ -65,6 +65,7 @@ const pathTitles: { [key: string]: string } = {
   '/plate': 'Plate',
   '/zahtevi-za-odmor': 'Zahtevi za odmor',
   '/struktura': 'Organizaciona struktura',
+  '/moj-profil': 'Moj profil',
 };
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -93,6 +94,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const handleUserMenuClose = () => {
     setUserMenuAnchor(null);
+  };
+
+  const handleProfileNavigation = () => {
+    handleUserMenuClose();
+    navigate('/moj-profil');
   };
 
   const handleLogout = () => {
@@ -302,7 +308,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   {user?.email}
                 </Typography>
               </Box>
-              <MenuItem onClick={handleUserMenuClose}>
+              <MenuItem onClick={handleProfileNavigation}>
                 <AccountCircleIcon sx={{ mr: 2 }} />
                 Moj profil
               </MenuItem>

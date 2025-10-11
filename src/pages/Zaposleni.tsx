@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
 import {
-  Box,
-  Button,
+  Container,
   Typography,
+  Paper,
+  Tab,
+  Tabs,
+  Box,
+  useTheme,
+  alpha,
+  Button,
   Snackbar,
   Alert,
 } from '@mui/material';
@@ -17,7 +23,41 @@ import ZaposleniList from '../components/ZaposleniList';
 import ZaposleniForm from '../components/ZaposleniForm';
 import ZaposleniDetails from '../components/ZaposleniDetails';
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`zaposleni-tabpanel-${index}`}
+      aria-labelledby={`zaposleni-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `zaposleni-tab-${index}`,
+    'aria-controls': `zaposleni-tabpanel-${index}`,
+  };
+}
+
 const ZaposleniPage: React.FC = () => {
+  const [tabValue, setTabValue] = useState(0);
   const [formOpen, setFormOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editingZaposleni, setEditingZaposleni] = useState<ZaposleniType | null>(null);
@@ -35,6 +75,7 @@ const ZaposleniPage: React.FC = () => {
     ascending: true,
   });
 
+  const theme = useTheme();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -107,14 +148,23 @@ const ZaposleniPage: React.FC = () => {
     setSnackbar({ open: true, message, severity });
   };
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+    if (newValue !== 1) {
+      setEditingZaposleni(null); // Resetuj selekciju kada nije forma tab
+    }
+  };
+
   const handleCreate = () => {
     setEditingZaposleni(null);
     setFormOpen(true);
+    setTabValue(1); // Prebaci na formu
   };
 
   const handleEdit = (zaposleni: ZaposleniType) => {
     setEditingZaposleni(zaposleni);
     setFormOpen(true);
+    setTabValue(1); // Prebaci na formu
   };
 
   const handleDelete = (id: number) => {
@@ -156,6 +206,7 @@ const ZaposleniPage: React.FC = () => {
   const handleFormClose = () => {
     setFormOpen(false);
     setEditingZaposleni(null);
+    setTabValue(0); // Vrati na listu
   };
 
   const handleDetailsClose = () => {
@@ -168,46 +219,98 @@ const ZaposleniPage: React.FC = () => {
     handleEdit(zaposleni);
   };
 
+  const handleFormSuccess = () => {
+    setFormOpen(false);
+    setEditingZaposleni(null);
+    setTabValue(0); // Vrati na listu
+  };
+
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Zaposleni</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleCreate}
-          size="large"
-        >
-          Dodaj zaposlenog
-        </Button>
-      </Box>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Typography 
+        variant="h3" 
+        component="h1" 
+        sx={{ 
+          mb: 4, 
+          textAlign: 'center',
+          background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 'bold'
+        }}
+      >
+        👥 Zaposleni Upravljanje
+      </Typography>
 
-      <ZaposleniList
-        data={data}
-        loading={isLoading}
-        search={searchParams.search || ''}
-        onSearchChange={handleSearchChange}
-        sortBy={searchParams.sortBy || 'ime'}
-        ascending={searchParams.ascending || true}
-        onSortChange={handleSortChange}
-        page={searchParams.page || 1}
-        pageSize={searchParams.pageSize || 10}
-        onPageChange={handlePageChange}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onView={handleView}
-        onImageUpload={handleImageUpload}
-      />
+      <Paper 
+        elevation={3}
+        sx={{ 
+          borderRadius: 4,
+          overflow: 'hidden',
+          bgcolor: alpha(theme.palette.background.paper, 0.9),
+          backdropFilter: 'blur(20px)'
+        }}
+      >
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange} 
+            aria-label="zaposleni tabs"
+            variant="fullWidth"
+            sx={{
+              '& .MuiTab-root': {
+                fontWeight: 'bold',
+                fontSize: '1rem',
+              }
+            }}
+          >
+            <Tab 
+              label="📋 Lista Zaposlenih" 
+              {...a11yProps(0)} 
+              icon={<span>📋</span>}
+              iconPosition="start"
+            />
+            <Tab 
+              label={editingZaposleni ? "✏️ Uredi Zaposlenog" : "➕ Dodaj Zaposlenog"} 
+              {...a11yProps(1)}
+              icon={editingZaposleni ? <span>✏️</span> : <span>➕</span>}
+              iconPosition="start"
+            />
+          </Tabs>
+        </Box>
 
-      <ZaposleniForm
-        open={formOpen}
-        onClose={handleFormClose}
-        onSubmit={handleFormSubmit}
-        editingZaposleni={editingZaposleni}
-        loading={createMutation.isPending || updateMutation.isPending}
-        onImageUpload={handleImageUpload}
-        imageUploadLoading={uploadImageMutation.isPending}
-      />
+        <TabPanel value={tabValue} index={0}>
+          <ZaposleniList
+            data={data}
+            loading={isLoading}
+            search={searchParams.search || ''}
+            onSearchChange={handleSearchChange}
+            sortBy={searchParams.sortBy || 'ime'}
+            ascending={searchParams.ascending || true}
+            onSortChange={handleSortChange}
+            page={searchParams.page || 1}
+            pageSize={searchParams.pageSize || 10}
+            onPageChange={handlePageChange}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onView={handleView}
+            onImageUpload={handleImageUpload}
+          />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1}>
+          <ZaposleniForm
+            open={formOpen}
+            onClose={handleFormClose}
+            onSubmit={handleFormSubmit}
+            editingZaposleni={editingZaposleni}
+            loading={createMutation.isPending || updateMutation.isPending}
+            onImageUpload={handleImageUpload}
+            imageUploadLoading={uploadImageMutation.isPending}
+          />
+        </TabPanel>
+      </Paper>
 
       <ZaposleniDetails
         zaposleni={viewingZaposleni}
@@ -231,7 +334,7 @@ const ZaposleniPage: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </Container>
   );
 };
 
