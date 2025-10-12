@@ -36,7 +36,8 @@ import {
   NavigateNext as NavigateNextIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';  
+import DateTimeDisplay from '../DateTimeDisplay';      
 
 const drawerWidth = 240;
 
@@ -50,6 +51,7 @@ interface MenuItem {
   icon: React.ReactElement;
 }
 
+// ✅ ISPRAVKA: Samo jedan menuItems sa svim stavkama uključujući Podešavanja
 const menuItems: MenuItem[] = [
   { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
   { text: 'Zaposleni', path: '/zaposleni', icon: <PeopleIcon /> },
@@ -57,6 +59,7 @@ const menuItems: MenuItem[] = [
   { text: 'Zahtevi za odmor', path: '/zahtevi-za-odmor', icon: <BeachAccessIcon /> },
   { text: 'Struktura', path: '/struktura', icon: <StructureIcon /> },
   { text: 'Inventar', icon: <InventoryIcon />, path: '/inventar' },
+  { text: 'Podešavanja', path: '/podesavanja', icon: <SettingsIcon /> },
 ];
 
 const pathTitles: { [key: string]: string } = {
@@ -66,6 +69,7 @@ const pathTitles: { [key: string]: string } = {
   '/zahtevi-za-odmor': 'Zahtevi za odmor',
   '/struktura': 'Organizaciona struktura',
   '/moj-profil': 'Moj profil',
+  '/podesavanja': 'Podešavanja',
 };
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -99,6 +103,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const handleProfileNavigation = () => {
     handleUserMenuClose();
     navigate('/moj-profil');
+  };
+
+  // ✅ ISPRAVKA: Dodana funkcija za navigaciju na podešavanja
+  const handleSettingsNavigation = () => {
+    handleUserMenuClose();
+    navigate('/podesavanja');
   };
 
   const handleLogout = () => {
@@ -224,7 +234,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <MenuIcon />
           </IconButton>
           
-          <Box sx={{ flexGrow: 1 }}>
+          <Box sx={{ flex: 1 }}>
             <Breadcrumbs 
               separator={<NavigateNextIcon fontSize="small" />}
               aria-label="breadcrumb"
@@ -237,7 +247,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Typography>
           </Box>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <DateTimeDisplay />
+          </Box>
+          
+          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
             <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
               <Typography variant="body2" color="text.secondary">
                 Pozdrav, {user?.userName}
@@ -312,7 +326,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <AccountCircleIcon sx={{ mr: 2 }} />
                 Moj profil
               </MenuItem>
-              <MenuItem onClick={handleUserMenuClose}>
+              {/* ✅ ISPRAVKA: Dodana navigacija na podešavanja */}
+              <MenuItem onClick={handleSettingsNavigation}>
                 <SettingsIcon sx={{ mr: 2 }} />
                 Podešavanja
               </MenuItem>

@@ -1,0 +1,116 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "employees": "Zaposleni",
+    "salaries": "Plate",
+    "vacation_requests": "Zahtevi za odmor",
+    "structure": "Struktura",
+    "inventory": "Inventar",
+    "settings": "Podešavanja",
+    "profile": "Moj profil",
+    "logout": "Odjavi se"
+  },
+  "common": {
+    "save": "Sačuvaj",
+    "cancel": "Otkaži",
+    "edit": "Izmeni",
+    "delete": "Obriši",
+    "add": "Dodaj",
+    "search": "Pretraži",
+    "filter": "Filtriranje",
+    "loading": "Učitavanje...",
+    "error": "Greška",
+    "success": "Uspešno",
+    "confirm": "Potvrdi",
+    "yes": "Da",
+    "no": "Ne",
+    "close": "Zatvori",
+    "submit": "Pošalji",
+    "reset": "Resetuj",
+    "back": "Nazad",
+    "next": "Sledeće",
+    "previous": "Prethodno"
+  },
+  "auth": {
+    "login": "Prijavi se",
+    "email": "Email",
+    "password": "Lozinka",
+    "welcome_back": "Dobrodošli nazad",
+    "invalid_credentials": "Neispravni podaci za prijavu",
+    "login_success": "Uspešno ste se prijavili"
+  },
+  "settings": {
+    "title": "Podešavanja",
+    "subtitle": "Prilagodite aplikaciju svojim potrebama",
+    "theme": "Tema",
+    "theme_light": "🌞 Svetla",
+    "theme_dark": "🌙 Tamna",
+    "language": "Jezik",
+    "language_sr": "🇷🇸 Srpski",
+    "language_en": "🇺🇸 Engleski",
+    "language_bg": "🇧🇬 Bugarski",
+    "language_uk": "🇺🇦 Ukrajinski",
+    "items_per_page": "Stavki po stranici",
+    "email_notifications": "Email notifikacije",
+    "deadline_notifications": "Deadline upozorenja",
+    "auto_save": "Automatsko čuvanje",
+    "timezone": "Vremenska zona",
+    "security": "🔐 Bezbednost",
+    "application": "🎨 Aplikacija",
+    "notifications": "🔔 Notifikacije i opcije",
+    "old_password": "Stara lozinka",
+    "new_password": "Nova lozinka",
+    "confirm_password": "Potvrda nove lozinke",
+    "change_password": "Promeni lozinku",
+    "changing": "Menjam...",
+    "saving": "Čuvam...",
+    "resetting": "Resetujem...",
+    "save_settings": "Sačuvaj podešavanja",
+    "reset_to_default": "Resetuj na početno",
+    "settings_saved": "Podešavanja su uspešno sačuvana",
+    "password_changed": "Lozinka je uspešno promenjena",
+    "settings_reset": "Podešavanja su resetovana na početne vrednosti",
+    "save_error": "Greška pri čuvanju podešavanja",
+    "password_error": "Greška pri promeni lozinke",
+    "reset_error": "Greška pri resetovanju podešavanja",
+    "passwords_dont_match": "Nova lozinka i potvrda se ne poklapaju",
+    "password_min_length": "Nova lozinka mora imati najmanje 6 karaktera",
+    "reset_confirm": "Da li ste sigurni da želite da resetujete sva podešavanja na početne vrednosti?",
+    "min_6_chars": "Minimum 6 karaktera",
+    "passwords_no_match": "Lozinke se ne poklapaju"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Dobrodošli",
+    "overview": "Pregled"
+  },
+  "employees": {
+    "title": "Zaposleni",
+    "add_employee": "Dodaj zaposlenog",
+    "employee_list": "Lista zaposlenih",
+    "name": "Ime",
+    "surname": "Prezime",
+    "position": "Pozicija",
+    "department": "Odsek",
+    "email": "Email",
+    "phone": "Telefon"
+  },
+  "profile": {
+    "title": "Moj profil",
+    "personal_info": "Lični podaci",
+    "business_info": "Poslovni podaci",
+    "edit_profile": "Izmeni profil"
+  },
+  "breadcrumbs": {
+    "home": "Početna"
+  },
+  "greeting": {
+    "hello": "Pozdrav"
+  },
+  "timezones": {
+    "belgrade": "🇷🇸 Belgrade",
+    "london": "🇬🇧 London", 
+    "new_york": "🇺🇸 New York",
+    "berlin": "🇩🇪 Berlin"
+  }
+}

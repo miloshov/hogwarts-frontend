@@ -1,0 +1,116 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "employees": "Employees",
+    "salaries": "Salaries",
+    "vacation_requests": "Vacation Requests",
+    "structure": "Structure",
+    "inventory": "Inventory",
+    "settings": "Settings",
+    "profile": "My Profile",
+    "logout": "Logout"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close",
+    "submit": "Submit",
+    "reset": "Reset",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "auth": {
+    "login": "Login",
+    "email": "Email",
+    "password": "Password",
+    "welcome_back": "Welcome back",
+    "invalid_credentials": "Invalid login credentials",
+    "login_success": "Successfully logged in"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Customize the application to your needs",
+    "theme": "Theme",
+    "theme_light": "🌞 Light",
+    "theme_dark": "🌙 Dark",
+    "language": "Language",
+    "language_sr": "🇷🇸 Serbian",
+    "language_en": "🇺🇸 English",
+    "language_bg": "🇧🇬 Bulgarian",
+    "language_uk": "🇺🇦 Ukrainian",
+    "items_per_page": "Items per page",
+    "email_notifications": "Email notifications",
+    "deadline_notifications": "Deadline alerts",
+    "auto_save": "Auto save",
+    "timezone": "Timezone",
+    "security": "🔐 Security",
+    "application": "🎨 Application",
+    "notifications": "🔔 Notifications and options",
+    "old_password": "Old password",
+    "new_password": "New password",
+    "confirm_password": "Confirm new password",
+    "change_password": "Change password",
+    "changing": "Changing...",
+    "saving": "Saving...",
+    "resetting": "Resetting...",
+    "save_settings": "Save settings",
+    "reset_to_default": "Reset to default",
+    "settings_saved": "Settings successfully saved",
+    "password_changed": "Password successfully changed",
+    "settings_reset": "Settings reset to default values",
+    "save_error": "Error saving settings",
+    "password_error": "Error changing password",
+    "reset_error": "Error resetting settings",
+    "passwords_dont_match": "New password and confirmation don't match",
+    "password_min_length": "New password must have at least 6 characters",
+    "reset_confirm": "Are you sure you want to reset all settings to default values?",
+    "min_6_chars": "Minimum 6 characters",
+    "passwords_no_match": "Passwords don't match"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome",
+    "overview": "Overview"
+  },
+  "employees": {
+    "title": "Employees",
+    "add_employee": "Add Employee",
+    "employee_list": "Employee List",
+    "name": "Name",
+    "surname": "Surname",
+    "position": "Position",
+    "department": "Department",
+    "email": "Email",
+    "phone": "Phone"
+  },
+  "profile": {
+    "title": "My Profile",
+    "personal_info": "Personal Information",
+    "business_info": "Business Information",
+    "edit_profile": "Edit Profile"
+  },
+  "breadcrumbs": {
+    "home": "Home"
+  },
+  "greeting": {
+    "hello": "Hello"
+  },
+  "timezones": {
+    "belgrade": "🇷🇸 Belgrade",
+    "london": "🇬🇧 London", 
+    "new_york": "🇺🇸 New York",
+    "berlin": "🇩🇪 Berlin"
+  }
+}

@@ -88,7 +88,7 @@ frontend/
 ### Preduslovi
 - Node.js 18.x ili noviji
 - npm ili yarn package manager
-- Backend API pokrenuta na `http://localhost:5001`
+- Backend API pokrenuta na `http://localhost:5241`
 
 ### Korak po korak:
 
@@ -109,7 +109,7 @@ frontend/
    
    Kreiraj `.env` fajl u root direktorijumu:
    ```env
-   VITE_API_BASE_URL=http://localhost:5001/api
+   VITE_API_BASE_URL=http://localhost:5241/api
    VITE_APP_TITLE=Hogwarts Management System
    ```
 
@@ -122,7 +122,7 @@ frontend/
 
 5. **Otvaranje u browseru**
    
-   Aplikacija će biti dostupna na `http://localhost:5173`
+   Aplikacija će biti dostupna na `http://localhost:3000`
 
 ## 🛠️ Dostupni skriptovi
 
