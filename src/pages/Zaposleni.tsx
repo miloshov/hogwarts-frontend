@@ -148,12 +148,16 @@ const ZaposleniPage: React.FC = () => {
     setSnackbar({ open: true, message, severity });
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-    if (newValue !== 1) {
-      setEditingZaposleni(null); // Resetuj selekciju kada nije forma tab
-    }
-  };
+const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  setTabValue(newValue);
+  if (newValue === 1) {
+    setFormOpen(true);
+    setEditingZaposleni(null);
+  } else {
+    setEditingZaposleni(null);
+    setFormOpen(false);
+  }
+};
 
   const handleCreate = () => {
     setEditingZaposleni(null);

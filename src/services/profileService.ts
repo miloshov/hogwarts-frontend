@@ -73,7 +73,7 @@ interface VacationRequest {
 class ProfileService {
   // ✅ ISPRAVKA: Koristi '/profile' umesto '/zaposleni/moji-podaci'
   async getUserProfile(): Promise<UserProfile> {
-    const response = await api.get('/zaposleni/moji-podaci');
+    const response = await api.get('/profile');
     const data = response.data;
     
     // Mapiramo odgovor na UserProfile format
